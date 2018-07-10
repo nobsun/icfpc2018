@@ -2,9 +2,9 @@ name:                icfpc2018
 version:             0.1.0.0
 github:              "nobsun/icfpc2018"
 license:             BSD3
-author:              "Nobuo Yamashita"
+author:              "Team Sampou"
 maintainer:          "nobsun@gmail.com"
-copyright:           "Copyright: (c) 2018 Nobuo Yamashita"
+copyright:           "Copyright: (c) 2018 Team Sampou"
 
 extra-source-files:
 - README.md
@@ -23,6 +23,7 @@ dependencies:
 - base >= 4.7 && < 5
 - unicode-show >= 0.1.0.2
 - markdown-unlit >= 0.5.0
+- hspec
 
 library:
   source-dirs: src
