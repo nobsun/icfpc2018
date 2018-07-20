@@ -3,6 +3,8 @@
 
 module Coordinate where
 
+import Data.Function (on)
+
 type R = Int
 
 isValidR :: R -> Bool
@@ -47,7 +49,7 @@ nd d = 0 < ml && ml <= 2 && cl == 1
 type Region = (Coord, Coord)
 
 instance {-# Overlapping #-} Eq Region where
-  r == r' = normRegion r == normRegion r'
+  (==) = (==) `on` normRegion
 
 memOfRegion :: Coord -> Region -> Bool
 memOfRegion (x,y,z) ((x1,y1,z1),(x2,y2,z2))
