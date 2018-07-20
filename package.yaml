@@ -21,7 +21,6 @@ description:         Please see the README on GitHub at <https://github.com/nobs
 
 dependencies:
 - base >= 4.7 && < 5
-- hspec >= 2.5 && < 3
 
 library:
   source-dirs: src
@@ -47,3 +46,4 @@ tests:
     - -with-rtsopts=-N
     dependencies:
     - icfpc2018
+    - hspec >= 2.5 && < 3
