@@ -23,13 +23,18 @@ dependencies:
 - base >= 4.7 && < 5
 - bytestring
 - containers
+- mtl
 - extra
+- mtl
 
 library:
   source-dirs: src
 
+# ghc-options:
+# - -Wall
+
 executables:
-  icfpc2018-exe:
+  icfpc2018-exe:         &icfpc2018-exe
     main:                Main.hs
     source-dirs:         app
     ghc-options:
@@ -38,6 +43,11 @@ executables:
     - -with-rtsopts=-N
     dependencies:
     - icfpc2018
+
+  oga-exe:
+    <<:                  *icfpc2018-exe
+    main:                Main.hs
+    source-dirs:         oga
 
 tests:
   icfpc2018-test:
