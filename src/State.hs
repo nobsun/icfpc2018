@@ -192,6 +192,18 @@ execSingleNanobotCommand _mat bid (Fill nd) = do
         Full -> do
           SM.put $ s{ stEnergy = stEnergy s + 6 }
 
+execSingleNanobotCommand _mat bid (Void nd) = do
+  s <- SM.get
+  case IntMap.lookup bid (stBots s) of
+    Just bot -> do
+      let c = botPos bot
+          c' = add c nd
+          mat = stMatrix s
+      case voxel mat c' of
+        Full -> do
+          SM.put $ s{ stMatrix = Matrix.void c' mat, stEnergy = stEnergy s - 12 }
+        Empty -> do
+          SM.put $ s{ stEnergy = stEnergy s + 3 }
 
 execFusion :: BotId -> BotId -> SM.State State ()
 execFusion bidP bidS = do
