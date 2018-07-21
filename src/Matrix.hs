@@ -41,7 +41,7 @@ isGrounded m = go (IntMap.toAscList m) (const True)
 data Voxel = Void | Full deriving (Show, Eq)
 
 voxel :: Matrix -> Coord -> Voxel
-voxel m (x,y,z) = maybe Void (bool Void Full . Set.member (x, z)) $ IntMap.lookup y m
+voxel m (Coord (x,y,z)) = maybe Void (bool Void Full . Set.member (x, z)) $ IntMap.lookup y m
 
 isFull :: Matrix -> Coord -> Bool
 isFull m c = voxel m c == Full
