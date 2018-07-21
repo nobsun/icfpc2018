@@ -122,7 +122,7 @@ binaryEncoderSpec = do
     it "LMove <3,0,0> <0,-5,0> is encoded as [10011100] [00001000]." $
       unwords (map showWord (encode (LMove (3,0,0) (0,-5,0)))) `shouldBe` "10011100 00001000"
 
-    it "LMove <0,-2,0> <0,0,2> is encoded to [11101100] [01110011]." $
+    it "LMove <0,-2,0> <0,0,2> is encoded as [11101100] [01110011]." $
       unwords (map showWord (encode (LMove (0,-2,0) (0,0,2)))) `shouldBe` "11101100 01110011"
 
   describe "FusionP" $ do
