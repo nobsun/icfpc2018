@@ -54,15 +54,21 @@ matrixSpec = do
     it "Matrix is constructed by just only Full voxels." $
        makeMatrix (filter (isFull mx) smallCoords) `shouldBe` mx
   describe "isGrounded" $ do
-    let valid0 = makeMatrix []
-        valid1 = makeMatrix [Coord (10,0,20)]
-        invalid0 = makeMatrix [Coord (0,1,0)]
+    let pt0 = makeMatrix []
+        pt1 = makeMatrix [Coord (10,0,20)]
+        line0 = makeMatrix $ map Coord [(0,0,0),(1,0,0),(2,0,0),(3,0,0)]
+        line1 = makeMatrix $ map Coord [(0,0,0),(0,1,0),(1,1,0),(2,1,0)]
+        out0 = makeMatrix [Coord (0,1,0)]
     it "empty is grounded" $
-      isGrounded valid0 `shouldBe` True
+      isGrounded pt0 `shouldBe` True
     it "point (10,0,20) is grounded" $
-      isGrounded valid1 `shouldBe` True
+      isGrounded pt1 `shouldBe` True
+    it "linear line is grounded" $
+      isGrounded line0 `shouldBe` True
+    it "zigzag line is grounded" $
+      isGrounded line1 `shouldBe` True
     it "point (0,1,0) is NOT grounded" $
-      isGrounded invalid0 `shouldBe` True
+      isGrounded out0 `shouldBe` False
 
 main :: IO ()
 main = hspec $ do
