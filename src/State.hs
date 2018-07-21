@@ -26,7 +26,7 @@ data Command
   | Wait
   | Flip
   | SMove LLD
-  | LMove LLD LLD
+  | LMove SLD SLD
   | Fission ND Int
   | Fill ND
   | FusionP ND
