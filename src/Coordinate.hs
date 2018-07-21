@@ -14,6 +14,10 @@ isValidR = (&&) . (0 <) <*> (<= 250)
 
 type Coord = (Int, Int, Int)
 type CDiff = (Int, Int, Int)
+type LD = CDiff
+type SLD = CDiff
+type LLD = CDiff
+type ND = CDiff
 
 add :: Coord -> CDiff -> Coord
 add (x,y,z) (dx,dy,dz) = (x+dx,y+dy,z+dz)
