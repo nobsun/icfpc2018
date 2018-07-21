@@ -2,6 +2,7 @@ module Matrix where
 
 import Coordinate
 
+import Data.Bool (bool)
 import Data.IntMap (IntMap)
 import qualified Data.IntMap as IntMap
 import Data.Map (Map)
@@ -36,3 +37,14 @@ isGrounded m = go (IntMap.toAscList m) (const True)
           | otherwise = converge f fx
           where
             fx = f x
+
+data Voxel = Void | Full deriving (Show, Eq)
+
+voxel :: Matrix -> Coord -> Voxel
+voxel m (x,y,z) = maybe Void (bool Void Full . Set.member (x, z)) $ IntMap.lookup y m
+
+isFull :: Matrix -> Coord -> Bool
+isFull m c = voxel m c == Full
+
+isVoid :: Matrix -> Coord -> Bool
+isVoid m c = voxel m c == Void
