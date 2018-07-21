@@ -49,13 +49,15 @@ adjacent c c' = mlen (sub c c') == 1
 pAND :: (a -> Bool) -> (a -> Bool) -> (a -> Bool)
 pAND p q x = p x && q x
 
--- linear coordinate difference (notated ld)
+-- requirement to define linear coordinate difference
 ld :: CDiff -> Bool
 ld (dx,dy,dz) = length (filter (/= 0) [dx,dy,dz]) == 1
 
+-- requirement to define short linear coordinate difference
 sld :: CDiff -> Bool
 sld = ld `pAND` ((<= 5) . mlen)
 
+-- requirement to define long linear coordinate difference
 lld :: CDiff -> Bool
 lld = ld `pAND` ((<= 15) . mlen)
 
