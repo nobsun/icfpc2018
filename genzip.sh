@@ -24,10 +24,10 @@ fi
 
 prv=$(cat data/private-id.txt)
 
-zip_path=${dir}/../icfpc2018-sampou-submit.zip
-sha_path=${dir}/../icfpc2018-sampou-submit.sha256
+zip_path=${dir}/../icfpc2018-sampou-submit-full.zip
+sha_path=${dir}/../icfpc2018-sampou-submit-full.sha256
 
-( cd $dir && zip -P $prv ../icfpc2018-sampou-submit.zip *.nbt > ../icfpc2018-sampou-submit.ziplog )
+( cd $dir && zip -P $prv ../icfpc2018-sampou-submit-full.zip *.nbt > ../icfpc2018-sampou-submit-full.ziplog )
 shasum -a 256 ${zip_path} | cut -d ' ' -f 1 > ${sha_path}
 
 ls -l ${zip_path}

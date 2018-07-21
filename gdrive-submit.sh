@@ -32,7 +32,7 @@ fi
 
 prv=$(cat data/private-id.txt)
 
-sha256=$(cat ${dir}/../icfpc2018-sampou-submit.sha256)
+sha256=$(cat ${dir}/../icfpc2018-sampou-submit-full.sha256)
 url="https://drive.google.com/uc?id=${file_id}"
 
 set -x
