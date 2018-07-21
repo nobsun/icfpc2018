@@ -3,6 +3,8 @@
 
 module Coordinate where
 
+import Control.Applicative (pure, (*>), Alternative)
+import Control.Monad (guard)
 import Data.Bool (bool)
 import Data.Function (on)
 import Data.Tuple.Extra (fst3, snd3, thd3)
@@ -18,6 +20,14 @@ type LD = CDiff
 type SLD = CDiff
 type LLD = CDiff
 type ND = CDiff
+
+coord :: Alternative f
+      => Int -> (Int, Int, Int) -> f Coord
+coord r (x, y, z) =
+  guard (0 <= x && x <= r - 1) *>
+  guard (0 <= y && y <= r - 1) *>
+  guard (0 <= z && z <= r - 1) *>
+  pure (Coord (x, y, z))
 
 add :: Coord -> CDiff -> Coord
 add (Coord (x,y,z)) (dx,dy,dz) = Coord (x+dx,y+dy,z+dz)
