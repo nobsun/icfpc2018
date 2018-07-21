@@ -1,0 +1,6 @@
+
+all:
+	stack build
+
+clean:
+	:
