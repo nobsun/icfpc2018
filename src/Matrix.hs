@@ -10,6 +10,8 @@ import qualified Data.Map as Map
 import Data.Set (Set)
 import qualified Data.Set as Set
 
+-- isGrounded の実装で層別に処理できるかと思って、この表現にしたけれど、
+-- それは出来なかったので、今の所、この表現にしている意味はない。
 type Matrix = IntMap (Set (Int,Int))
 
 makeMatrix :: [Coord] -> Matrix
@@ -19,28 +21,26 @@ matrixCoords :: Matrix -> [Coord]
 matrixCoords m = [Coord (x,y,z) | (y, xzs) <- IntMap.toList m, (x,z) <- Set.toList xzs]
 
 isGrounded :: Matrix -> Bool
-isGrounded m = layered xs && go xs (const True)
+isGrounded m =
+  case converge f (g0,u0) of
+    (g,u) -> Set.null u
   where
-    xs :: [(Int, Set (Int,Int))]
-    xs = IntMap.toAscList m
-    layered :: [(Int, a)] -> Bool
-    layered = and . zipWith (==) [0..] . map fst
-    go :: [(Int, Set (Int,Int))] -> ((Int,Int) -> Bool) -> Bool
-    go [] _prev = True
-    go ((_y,xzs) : ls) prev = and table && go ls (\xz -> Map.lookup xz table == Just True)
+    g0 = Set.map (\(x,z) -> Coord (x,0,z)) $ IntMap.findWithDefault Set.empty 0 m
+    u0 = Set.fromList (matrixCoords m) Set.\\ g0
+
+    f (g,u) = (g `Set.union` s1, u Set.\\ s1)
       where
-        table :: Map (Int,Int) Bool
-        table = converge f tbl0
-          where
-            tbl0 :: Map (Int,Int) Bool
-            tbl0 = Map.fromList [(xz, prev xz) | xz@(x,z) <- Set.toAscList xzs]
-            f :: Map (Int,Int) Bool -> Map (Int,Int) Bool
-            f tbl = Map.mapWithKey (\(x,z) g -> g || or [Map.lookup (x',z') tbl == Just True | (x',z') <- [(x-1,z),(x+1,z),(x,z-1),(x,z+1)]]) tbl
-        converge f x
-          | fx == x = x
-          | otherwise = converge f fx
-          where
-            fx = f x
+        s0 = Set.fromList
+             [c | Coord (x,y,z) <- Set.toList g
+                , c <- map Coord [(x-1,y,z),(x+1,y,z),(x,y-1,z),(x,y+1,z),(x,y,z-1),(x,y,z+1)]
+             ]
+        s1 = Set.intersection s0 u
+
+    converge f x
+      | fx == x = x
+      | otherwise = converge f fx
+      where
+        fx = f x
 
 data Voxel = Void | Full deriving (Show, Eq)
 
