@@ -5,7 +5,9 @@ import Test.Hspec
 import Data.Bits
 import qualified Data.ByteString.Lazy as BL
 import qualified Data.ByteString as BS
+import qualified Data.IntMap as IntMap
 import Data.Serialize.Get (runGet)
+import qualified Data.Set as Set
 import Data.Word
 
 import BinaryEncoder
@@ -97,6 +99,12 @@ matrixSpec = do
     it "grounded line lifted is NOT grounded." $
       isGrounded out3 `shouldBe` False
 
+  describe "fill/void" $ do
+    let m = makeMatrix' [(0,0,0),(0,1,0),(1,0,0)]
+    it "void (0,0,0)" $
+      void (Coord (0,0,0)) m `shouldBe` IntMap.fromList [(0, Set.fromList [(1,0)]), (1, Set.fromList [(0,0)])]
+    it "void (0,1,0)" $
+      void (Coord (0,1,0)) m `shouldBe` IntMap.fromList [(0, Set.fromList [(0,0),(1,0)])]
 
 showWord :: Word8 -> String
 showWord w =

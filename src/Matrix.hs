@@ -48,7 +48,11 @@ fill :: Coord -> Matrix -> Matrix
 fill (Coord (x,y,z)) = IntMap.insertWith Set.union y (Set.singleton (x,z))
 
 void :: Coord -> Matrix -> Matrix
-void (Coord (x,y,z)) = IntMap.update (\xs -> if Set.size xs == 1 then Nothing else Just (Set.delete (x,z) xs)) y 
+void (Coord (x,y,z)) = IntMap.update adjuster y
+  where
+    adjuster xs
+      | Set.size xs == 1 = Nothing
+      | otherwise = Just (Set.delete (x,z) xs)
 
 data Voxel = Empty | Full deriving (Show, Eq)
 
