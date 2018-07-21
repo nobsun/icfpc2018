@@ -8,7 +8,7 @@ import State
 
 
 bit00011111 :: Word8
-bit00011111 = foldl1 (.&.) (map bit [1..5])
+bit00011111 = foldl1 (.&.) (map bit [0..4])
 
 low5 :: Word8 -> Word8
 low5 n = n .|. bit00011111
@@ -17,14 +17,14 @@ toWord :: Int -> Word8
 toWord n = fromIntegral (n `mod` 256) 
 
 encodeLLD :: LLD -> (Word8,Word8)
-encodeLLD (dx,0,0) = (1, low5 ((toWord dx)+5))
-encodeLLD (0,dy,0) = (2, low5 ((toWord dy)+5))
-encodeLLD (0,0,dz) = (3, low5 ((toWord dz)+5))
+encodeLLD (dx,0,0) = (1, low5 ((toWord dx)+15))
+encodeLLD (0,dy,0) = (2, low5 ((toWord dy)+15))
+encodeLLD (0,0,dz) = (3, low5 ((toWord dz)+15))
 
 encodeSLD :: SLD -> (Word8,Word8)
-encodeSLD (dx,0,0) = (1, low5 ((toWord dx)+15))
-encodeSLD (0,dy,0) = (2, low5 ((toWord dy)+15))
-encodeSLD (0,0,dz) = (3, low5 ((toWord dz)+15))
+encodeSLD (dx,0,0) = (1, low5 ((toWord dx)+5))
+encodeSLD (0,dy,0) = (2, low5 ((toWord dy)+5))
+encodeSLD (0,0,dz) = (3, low5 ((toWord dz)+5))
 
 encodeND :: ND -> Word8
 encodeND (dx,dy,dz) = ((toWord dx)+1)*9 + ((toWord dy)+1)*3 + ((toWord dz)+1)
@@ -37,7 +37,7 @@ encode Wait = [254]
 encode Flip = [253]
 
 encode (SMove lld) =
-  [ 0 .|. (shiftL da 4) .|. bit 3
+  [ 0 .|. (shiftL da 4) .|. bit 2
   , di
   ]
   where
