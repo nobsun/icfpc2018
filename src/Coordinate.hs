@@ -15,6 +15,9 @@ isValidR :: R -> Bool
 isValidR = (&&) . (0 <) <*> (<= 250)
 
 newtype Coord = Coord (Int, Int, Int) deriving (Eq, Ord, Show)
+unCoord :: Coord -> (Int,Int,Int)
+unCoord (Coord c) = c
+
 type CDiff = (Int, Int, Int)
 type LD = CDiff
 type SLD = CDiff
