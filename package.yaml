@@ -50,6 +50,14 @@ executables:
     main:                Main.hs
     source-dirs:         oga
 
+  oga-traces:
+    main:                oga-traces.hs
+    source-dirs:         app-traces
+    ghc-options:
+    - -Wall
+    dependencies:
+    - icfpc2018
+
 tests:
   icfpc2018-test:
     main:                Spec.hs
