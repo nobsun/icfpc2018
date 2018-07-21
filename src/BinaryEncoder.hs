@@ -11,7 +11,7 @@ import State
 
 
 bit00011111 :: Word8
-bit00011111 = foldl1 (.&.) (map bit [0..4])
+bit00011111 = 31
 
 low5 :: Word8 -> Word8
 low5 n = n .|. bit00011111
