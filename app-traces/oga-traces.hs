@@ -17,8 +17,6 @@ run :: FilePath -> FilePath -> IO ()
 run mdl nbt = do
   model <- readModel mdl
   let trs = getOgaBotTrace model
---  print trs
-  mapM_ print trs
   writeTraceFile nbt trs
 
 stripSuffix_ :: String -> String -> String
