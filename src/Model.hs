@@ -6,6 +6,7 @@ import Control.Monad
 import Data.Bits
 import qualified Data.ByteString.Lazy as BL
 
+import Coordinate
 import Matrix
 
 data Model = Model !Int Matrix
@@ -31,7 +32,7 @@ parseModel s
           (y,z) = yz `divMod` r
       guard $ xyz < r3
       guard b
-      return (x,y,z)
+      return $ Coord (x,y,z)
 
 readModel :: FilePath -> IO Model
 readModel fpath = liftM parseModel $ BL.readFile fpath

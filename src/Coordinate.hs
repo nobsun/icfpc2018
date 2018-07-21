@@ -12,7 +12,7 @@ type R = Int
 isValidR :: R -> Bool
 isValidR = (&&) . (0 <) <*> (<= 250)
 
-type Coord = (Int, Int, Int)
+newtype Coord = Coord (Int, Int, Int) deriving (Eq, Ord, Show)
 type CDiff = (Int, Int, Int)
 type LD = CDiff
 type SLD = CDiff
@@ -20,10 +20,10 @@ type LLD = CDiff
 type ND = CDiff
 
 add :: Coord -> CDiff -> Coord
-add (x,y,z) (dx,dy,dz) = (x+dx,y+dy,z+dz)
+add (Coord (x,y,z)) (dx,dy,dz) = Coord (x+dx,y+dy,z+dz)
 
 sub :: Coord -> Coord -> CDiff
-sub (x,y,z) (x',y',z') = (x-x',y-y',z-z')
+sub (Coord (x,y,z)) (Coord (x',y',z')) = (x-x',y-y',z-z')
 
 -- Manhattan length (or L1 norm)
 mlen :: CDiff -> Int
@@ -60,19 +60,20 @@ instance {-# Overlapping #-} Eq Region where
   (==) = (==) `on` normRegion
 
 memOfRegion :: Coord -> Region -> Bool
-memOfRegion (x,y,z) ((x1,y1,z1),(x2,y2,z2))
+memOfRegion (Coord (x,y,z)) (Coord (x1,y1,z1), Coord (x2,y2,z2))
   = and [ min x1 x2 <= x && x <= max x1 x2
         , min y1 y2 <= y && x <= max y1 y2
         , min z1 z2 <= z && z <= max z1 z2
         ]
 
 normRegion :: Region -> Region
-normRegion ((x1,y1,z1),(x2,y2,z2)) = ((min x1 x2, min y1 y2, min z1 z2), (max x1 x2, max y1 y2, max z1 z2))
+normRegion (Coord (x1,y1,z1), Coord (x2,y2,z2)) =
+  (Coord (min x1 x2, min y1 y2, min z1 z2), Coord (max x1 x2, max y1 y2, max z1 z2))
 
 type Dimension = Int
 
 dim :: Region -> Dimension
-dim (c1, c2) = dim' fst3 + dim' snd3 + dim' thd3
+dim (Coord c1, Coord c2) = dim' fst3 + dim' snd3 + dim' thd3
   where
     dim' acc = bool 1 0 $ ((==) `on` acc) c1 c2
 
