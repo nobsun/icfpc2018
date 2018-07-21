@@ -3,7 +3,9 @@
 
 module Coordinate where
 
+import Data.Bool (bool)
 import Data.Function (on)
+import Data.Tuple.Extra (fst3, snd3, thd3)
 
 type R = Int
 
@@ -60,3 +62,10 @@ memOfRegion (x,y,z) ((x1,y1,z1),(x2,y2,z2))
 
 normRegion :: Region -> Region
 normRegion ((x1,y1,z1),(x2,y2,z2)) = ((min x1 x2, min y1 y2, min z1 z2), (max x1 x2, max y1 y2, max z1 z2))
+
+type Dimension = Int
+
+dim :: Region -> Dimension
+dim (c1, c2) = dim' fst3 + dim' snd3 + dim' thd3
+  where
+    dim' acc = bool 1 0 $ ((==) `on` acc) c1 c2
