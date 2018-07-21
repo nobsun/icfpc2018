@@ -47,13 +47,13 @@ isGrounded m =
 fill :: Coord -> Matrix -> Matrix
 fill (Coord (x,y,z)) = IntMap.insertWith Set.union y (Set.singleton (x,z))
 
-data Voxel = Void | Full deriving (Show, Eq)
+data Voxel = Empty | Full deriving (Show, Eq)
 
 voxel :: Matrix -> Coord -> Voxel
-voxel m (Coord (x,y,z)) = maybe Void (bool Void Full . Set.member (x, z)) $ IntMap.lookup y m
+voxel m (Coord (x,y,z)) = maybe Empty (bool Empty Full . Set.member (x, z)) $ IntMap.lookup y m
 
 isFull :: Matrix -> Coord -> Bool
 isFull m c = voxel m c == Full
 
-isVoid :: Matrix -> Coord -> Bool
-isVoid m c = voxel m c == Void
+isEmpty :: Matrix -> Coord -> Bool
+isEmpty m c = voxel m c == Empty

@@ -58,8 +58,8 @@ matrixSpec = do
   describe "matrix" $ do
     it "voxel (0,1,0) is Full." $
       voxel mx (Coord (0,1,0)) `shouldBe` Full
-    it "voxel (0,0,1) is Void." $
-      voxel mx (Coord (0,0,1)) `shouldBe` Void
+    it "voxel (0,0,1) is Empty." $
+      voxel mx (Coord (0,0,1)) `shouldBe` Empty
     it "Matrix is constructed by just only Full voxels." $
        makeMatrix (filter (isFull mx) $ map Coord small) `shouldBe` mx
   describe "isGrounded" $ do

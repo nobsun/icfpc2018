@@ -66,6 +66,7 @@ data Command
   | LMove SLD SLD
   | Fission ND Int
   | Fill ND
+  | Void ND
   | FusionP ND
   | FusionS ND
   deriving (Eq, Ord, Show)
@@ -143,7 +144,7 @@ execSingleNanobotCommand mat bid (SMove lld) = do
     Just bot -> do
       let c  = botPos bot
           c' = add c lld
-      unless (checkVoidRegion mat (region c c')) $ error "SMove pre-condition is violated"
+      unless (checkEmptyRegion mat (region c c')) $ error "SMove pre-condition is violated"
       SM.put $
         s{ stBots   = IntMap.insert bid bot{ botPos = c' } (stBots s)
          , stEnergy = stEnergy s + fromIntegral (2 * mlen lld)
@@ -155,8 +156,8 @@ execSingleNanobotCommand mat bid (LMove sld1 sld2) = do
       let c   = botPos bot
           c'  = add c sld1
           c'' = add c' sld2
-      unless (checkVoidRegion mat (region c  c' )) $ error "LMove pre-condition is violated"
-      unless (checkVoidRegion mat (region c' c'')) $ error "LMove pre-condition is violated"
+      unless (checkEmptyRegion mat (region c  c' )) $ error "LMove pre-condition is violated"
+      unless (checkEmptyRegion mat (region c' c'')) $ error "LMove pre-condition is violated"
       SM.put $
         s{ stBots   = IntMap.insert bid bot{ botPos = c'' } (stBots s)
          , stEnergy = stEnergy s + fromIntegral (2 * mlen sld1 + 2 + mlen sld2)
@@ -168,7 +169,7 @@ execSingleNanobotCommand mat bid (Fission nd m) = do
       when (IntSet.null (botSeeds bot)) $ error "Fission pre-condition is violated"
       let c = botPos bot
           c' = add c nd
-      unless (isVoid mat c') $ error "Fission pre-condition is violated"
+      unless (isEmpty mat c') $ error "Fission pre-condition is violated"
       case splitAt (m+1) (IntSet.toAscList (botSeeds bot)) of
         (bid':seeds1, seeds2) -> do
           SM.put $
@@ -186,7 +187,7 @@ execSingleNanobotCommand _mat bid (Fill nd) = do
           c' = add c nd
           mat = stMatrix s
       case voxel mat c' of
-        Void -> do
+        Empty -> do
           SM.put $ s{ stMatrix = fill c' mat, stEnergy = stEnergy s + 12 }
         Full -> do
           SM.put $ s{ stEnergy = stEnergy s + 6 }
@@ -208,5 +209,5 @@ execFusion bidP bidS = do
              }
 
 
-checkVoidRegion :: Matrix -> Region -> Bool
-checkVoidRegion mat r = all (isVoid mat) (membersOfRegion r)
+checkEmptyRegion :: Matrix -> Region -> Bool
+checkEmptyRegion mat r = all (isEmpty mat) (membersOfRegion r)
