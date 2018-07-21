@@ -73,7 +73,7 @@ matrixSpec = do
     it "point (10,0,20) is grounded." $
       isGrounded pt1 `shouldBe` True
     it "2 splitted points (1,0,2) and (3,0,4) is grounded." $
-      isGrounded pt1 `shouldBe` True
+      isGrounded pt2 `shouldBe` True
     it "linear line is grounded." $
       isGrounded line0 `shouldBe` True
     it "zigzag line is grounded." $
