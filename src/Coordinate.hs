@@ -73,3 +73,8 @@ dim :: Region -> Dimension
 dim (c1, c2) = dim' fst3 + dim' snd3 + dim' thd3
   where
     dim' acc = bool 1 0 $ ((==) `on` acc) c1 c2
+
+data Shape = Point | Line | Plane | Box deriving (Show, Eq, Ord, Enum)
+
+shape :: Region -> Shape
+shape = toEnum . dim
