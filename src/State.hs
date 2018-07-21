@@ -13,6 +13,7 @@ import Data.Set (Set)
 import Coordinate
 import Matrix
 
+-- | The state S of an executing Nanobot Matter Manipulation System
 data State
   = State
   { stEnergy :: !Integer
@@ -24,9 +25,10 @@ data State
 
 type BotId = Int
 
+-- | The state of an active nanobot bot
 data Bot
   = Bot
-  { botId  :: BotId
+  { botId  :: BotId  -- ^ bid in doc
   , botPos :: Coord
   , botSeeds :: IntSet -- set of BotId
   } deriving (Eq, Ord, Show)
@@ -112,7 +114,7 @@ execSingleNanobotCommand bid (Fill nd) = do
         Void -> do
           SM.put $ s{ stMatrix = fill c' mat, stEnergy = stEnergy s + 12 }
         Full -> do
-          SM.put $ s{ stEnergy = stEnergy s + 6 }  
+          SM.put $ s{ stEnergy = stEnergy s + 6 }
 
 execFusion :: (BotId,ND) -> (BotId,ND) -> SM.State State ()
 execFusion (bidP,ndP) (bidS,ndS) = do
@@ -127,7 +129,7 @@ execFusion (bidP,ndP) (bidS,ndS) = do
             s{ stBots =
                  IntMap.insert bidP botP{ botSeeds = IntSet.insert bidS $ botSeeds botS `IntSet.union` botSeeds botP } $
                  IntMap.delete bidS $
-                 stBots s 
+                 stBots s
              , stEnergy = stEnergy s - 24
              }
 
