@@ -57,6 +57,8 @@ matrixSpec = do
         pt2 = makeMatrix' [(1,0,2), (3,0,4)]
         line0 = makeMatrix' [(0,0,0),(1,0,0),(2,0,0),(3,0,0)]
         line1 = makeMatrix' [(0,0,0),(0,1,0),(1,1,0),(2,1,0)]
+        line2 = makeMatrix' [(0,0,0),(0,1,0),(0,2,0),(0,2,1),(0,2,2),(0,1,2)]
+        line3 = makeMatrix' [(0,0,0),(0,1,0),(0,2,0),(0,2,1),(0,2,2),(0,1,2),(0,0,2)]
         out0 = makeMatrix' [(0,1,0)]
         out1 = makeMatrix' [(1,1,1)]
         out2 = makeMatrix' [(10,0,20),(1,1,1)]
@@ -71,6 +73,10 @@ matrixSpec = do
       isGrounded line0 `shouldBe` True
     it "zigzag line is grounded." $
       isGrounded line1 `shouldBe` True
+    it "gamma line is grounded." $
+      isGrounded line2 `shouldBe` True
+    it "bridge line is grounded." $
+      isGrounded line3 `shouldBe` True
     it "point (0,1,0) is NOT grounded." $
       isGrounded out0 `shouldBe` False
     it "point (1,1,1) is NOT grounded." $
