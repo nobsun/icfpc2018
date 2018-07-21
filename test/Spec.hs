@@ -53,6 +53,10 @@ matrixSpec = do
       voxel mx (Coord (0,0,1)) `shouldBe` Void
     it "Matrix is constructed by just only Full voxels." $
        makeMatrix (filter (isFull mx) smallCoords) `shouldBe` mx
+  describe "isGrounded" $ do
+    let mx0 = makeMatrix []
+    it "empty is grounded" $
+      isGrounded mx0 `shouldBe` True
 
 main :: IO ()
 main = hspec $ do
