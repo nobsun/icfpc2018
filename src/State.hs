@@ -14,6 +14,8 @@ import Data.Set (Set)
 
 import Coordinate
 import Matrix
+import Model
+
 
 -- | The state S of an executing Nanobot Matter Manipulation System
 data State
@@ -28,6 +30,22 @@ data State
 
 stateIsWellformed :: State -> Bool
 stateIsWellformed _ = True -- todo
+
+initialState :: Model -> Trace -> State
+initialState (Model res mat) trace =
+  State
+  { stEnergy = 0
+  , stHarmonics = False
+  , stResolution = res
+  , stMatrix = makeMatrix []
+  , stBots = IntMap.singleton 1 $
+      Bot
+      { botId = 1
+      , botPos = Coord (0,0,0)
+      , botSeeds = IntSet.fromList [2..20]
+      }
+  , stTrace = trace
+  }
 
 
 type BotId = Int
@@ -54,6 +72,14 @@ data Command
 
 type Trace = [Command]
 
+execSteps :: SM.State State ()
+execSteps = do
+  s <- SM.get
+  if IntMap.null (stBots s) then
+    return ()
+  else do
+    execOneStep
+    execSteps
 
 execOneStep :: SM.State State ()
 execOneStep = do
