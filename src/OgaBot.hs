@@ -2,6 +2,7 @@
 
 module OgaBot where
 
+import Control.Monad (replicateM)
 import qualified Control.Monad.State.Lazy as St
 import qualified Data.IntMap as IntMap
 import qualified Data.Set as Set
@@ -44,15 +45,16 @@ sMoveDz n = do
 sMoveAbs :: (Int,Int,Int) -> OgaBotSt ()
 sMoveAbs (x,y,z) = do
   (Bot{botPos=Coord(cx,cy,cz)},trs) <- St.get
-  if abs (x-cx) <= 15
-    then sMoveDx (x-cx)
-    else sMoveDx (15*signum(x-cx)) >> sMoveDx ((x-cx)-(15*signum(x-cx)))
-  if abs (y-cy) <= 15
-    then sMoveDy (y-cy)
-    else sMoveDy (15*signum(y-cy)) >> sMoveDy ((y-cy)-(15*signum(y-cy)))
-  if abs (z-cz) <= 15
-    then sMoveDz (z-cz)
-    else sMoveDz (15*signum(z-cz)) >> sMoveDz ((z-cz)-(15*signum(z-cz)))  
+  let (qx,rx) = (x-cx)`quotRem`15
+  replicateM (abs qx) (sMoveDx (15*(signum qx)))
+  sMoveDx rx
+  let (qy,ry) = (y-cy)`quotRem`15
+  replicateM (abs qy) (sMoveDy (15*(signum qy)))
+  sMoveDy ry
+  let (qz,rz) = (z-cz)`quotRem`15
+  replicateM (abs qz) (sMoveDz (15*(signum qz)))
+  sMoveDz rz
+
 
 fillBottom :: OgaBotSt ()
 fillBottom = do
