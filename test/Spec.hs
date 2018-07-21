@@ -1,13 +1,18 @@
+{-# LANGUAGE BinaryLiterals #-}
+
 import Test.Hspec
 
 import Data.Bits
 import qualified Data.ByteString.Lazy as BL
+import qualified Data.ByteString as BS
+import Data.Serialize.Get (runGet)
 import Data.Word
 
 import BinaryEncoder
 import Coordinate
 import Matrix
 import State
+import TraceDecoder (trace)
 
 makeMatrix' :: [(Int, Int, Int)] -> Matrix
 makeMatrix' = makeMatrix . map Coord
@@ -154,6 +159,49 @@ traceFileSpec = do
     it "Flip Flip Wait Halt" $
       unwords (map showWord (BL.unpack (encodeTrace [Flip,Flip,Wait,Halt]))) `shouldBe` "11111101 11111101 11111110 11111111"
 
+traceDecoderSpec :: Spec
+traceDecoderSpec = do
+  describe "Halt" $ do
+    it "Halt is encoded as [11111111]8." $
+      runGet trace (BS.pack [0b11111111]) `shouldBe` Right [Halt]
+
+  describe "Wait" $ do
+    it "Wait is encoded as [11111110]8." $
+      runGet trace (BS.pack [0b11111110]) `shouldBe` Right [Wait]
+
+  describe "Flip" $ do
+    it "Flip is encoded as [11111101]8." $
+      runGet trace (BS.pack [0b11111101]) `shouldBe` Right [Flip]
+
+  describe "SMove" $ do
+    it "SMove <12,0,0> is encoded as [00010100] [00011011]." $
+      runGet trace (BS.pack [0b00010100, 0b00011011]) `shouldBe` Right [SMove (12,0,0)]
+
+    it "SMove <0,0,-4> is encoded as [00110100] [00001011]." $
+      runGet trace (BS.pack [0b00110100, 0b00001011]) `shouldBe` Right [SMove (0,0,-4)]
+
+  describe "LMove" $ do
+    it "LMove <3,0,0> <0,-5,0> is encoded as [10011100] [00001000]." $
+      runGet trace (BS.pack [0b10011100, 0b00001000]) `shouldBe` Right [LMove (3,0,0) (0,-5,0)]
+
+    it "LMove <0,-2,0> <0,0,2> is encoded as [11101100] [01110011]." $
+      runGet trace (BS.pack [0b11101100, 0b01110011]) `shouldBe` Right [LMove (0,-2,0) (0,0,2)]
+             
+  describe "FusionP" $ do
+    it "FusionP <-1,1,0> is encoded as [00111111]." $
+      runGet trace (BS.pack [0b00111111]) `shouldBe` Right [FusionP (-1,1,0)]
+
+  describe "FusionS" $ do
+    it "FusionS <1,-1,0> is encoded as [10011110]." $
+      runGet trace (BS.pack [0b10011110]) `shouldBe` Right [FusionS (1,-1,0)]
+
+  describe "Fission" $ do
+    it "Fission <0,0,1> 5 is encoded as [01110101] [00000101]" $
+      runGet trace (BS.pack [0b01110101, 0b00000101]) `shouldBe` Right [Fission (0,0,1) 5]
+
+  describe "Fill" $ do
+    it "Fill <0,-1,0> is encoded as [01010011]" $
+      runGet trace (BS.pack [0b01010011]) `shouldBe` Right [Fill (0,-1,0)]
 
 main :: IO ()
 main = hspec $ do
@@ -161,3 +209,4 @@ main = hspec $ do
   matrixSpec
   binaryEncoderSpec
   traceFileSpec
+  traceDecoderSpec
