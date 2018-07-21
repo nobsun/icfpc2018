@@ -95,6 +95,16 @@ memOfRegion_ p = memOfRegion p . uncurry region
 normRegion_ :: Region_ -> Region_
 normRegion_ = unRegion . uncurry region
 
+membersOfRegion :: Region -> [Coord]
+membersOfRegion (Region (Coord (x1,y1,z1), Coord (x2,y2,z2))) = do
+  x <- [x1 .. x2]
+  y <- [y1 .. y2]
+  z <- [z1 .. z2]
+  return $ Coord (x,y,z)
+
+membersOfRegion_ :: Region_ -> [Coord]
+membersOfRegion_ = membersOfRegion . uncurry region
+
 type Dimension = Int
 
 dim :: Region -> Dimension

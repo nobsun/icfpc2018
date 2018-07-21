@@ -46,6 +46,9 @@ isGrounded m =
       where
         fx = f x
 
+fill :: Coord -> Matrix -> Matrix
+fill (Coord (x,y,z)) = IntMap.insertWith Set.union y (Set.singleton (x,z))
+
 data Voxel = Void | Full deriving (Show, Eq)
 
 voxel :: Matrix -> Coord -> Voxel
