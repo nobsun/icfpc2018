@@ -25,9 +25,11 @@ add (x,y,z) (dx,dy,dz) = (x+dx,y+dy,z+dz)
 sub :: Coord -> Coord -> CDiff
 sub (x,y,z) (x',y',z') = (x-x',y-y',z-z')
 
+-- Manhattan length (or L1 norm)
 mlen :: CDiff -> Int
 mlen (dx, dy, dz) = abs dx + abs dy + abs dz
 
+-- Chessboard length (or Chebyshev distance or L∞ norm)
 clen :: CDiff -> Int
 clen (dx, dy, dz) = max (max (abs dx) (abs dy)) (abs dz)
 
