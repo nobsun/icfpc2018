@@ -22,11 +22,11 @@ type LLD = CDiff
 type ND = CDiff
 
 coord :: Alternative f
-      => Int -> Int -> Int -> f Coord
-coord x y z =
-  guard (x >= 0) *>
-  guard (y >= 0) *>
-  guard (z >= 0) *>
+      => Int -> (Int, Int, Int) -> f Coord
+coord r (x, y, z) =
+  guard (0 <= x && x <= r - 1) *>
+  guard (0 <= y && y <= r - 1) *>
+  guard (0 <= z && z <= r - 1) *>
   pure (Coord (x, y, z))
 
 add :: Coord -> CDiff -> Coord
