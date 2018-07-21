@@ -3,22 +3,20 @@ import Test.Hspec
 import Coordinate
 import Matrix
 
-smallCD :: [CDiff]
-smallCoords :: [Coord]
-(smallCD, smallCoords) = (small, map Coord small)
-  where
-    small =  [(x,y,z)|x<-[-5..5],y<-[-5..5],z<-[-5..5]]
-largeCD :: [CDiff]
-largeCD =  [(x,y,z)|x<-[-15..15],y<-[-15..15],z<-[-15..15]]
+makeMatrix' :: [(Int, Int, Int)] -> Matrix
+makeMatrix' = makeMatrix . map Coord
+
+small =  [(x,y,z)|x<-[-5..5],y<-[-5..5],z<-[-5..5]]
+large =  [(x,y,z)|x<-[-15..15],y<-[-15..15],z<-[-15..15]]
 
 coordinateSpec :: Spec
 coordinateSpec = do
   describe "ld and nd" $ do
     it "sld if mlen(ld) ≤ 5 then exactly 30 slds." $
-      length (filter sld smallCD) `shouldBe` 30
+      length (filter sld small) `shouldBe` 30
       
     it "lld if mlen(ld) ≤ 15 then exactly 90 llds." $
-      length (filter lld  largeCD) `shouldBe` 90
+      length (filter lld  large) `shouldBe` 90
 
     it "nd if mlen(d) <= 2 then exactly 18 nds." $
       length [Coord (x,y,z)|x<-[-2..2],y<-[-2..2],z<-[-2..2], 0 < mlen (x,y,z) && mlen (x,y,z) <= 2 && clen (x,y,z) == 1] `shouldBe` 18
@@ -45,20 +43,20 @@ coordinateSpec = do
 
 matrixSpec :: Spec
 matrixSpec = do
-  let mx = makeMatrix $ map Coord [(0,0,0),(0,1,0),(0,0,2),(0,3,0),(1,1,2),(1,0,3)]
+  let mx = makeMatrix' [(0,0,0),(0,1,0),(0,0,2),(0,3,0),(1,1,2),(1,0,3)]
   describe "matrix" $ do
     it "voxel (0,1,0) is Full." $
       voxel mx (Coord (0,1,0)) `shouldBe` Full
     it "voxel (0,0,1) is Void." $
       voxel mx (Coord (0,0,1)) `shouldBe` Void
     it "Matrix is constructed by just only Full voxels." $
-       makeMatrix (filter (isFull mx) smallCoords) `shouldBe` mx
+       makeMatrix (filter (isFull mx) $ map Coord small) `shouldBe` mx
   describe "isGrounded" $ do
-    let pt0 = makeMatrix []
-        pt1 = makeMatrix [Coord (10,0,20)]
-        line0 = makeMatrix $ map Coord [(0,0,0),(1,0,0),(2,0,0),(3,0,0)]
-        line1 = makeMatrix $ map Coord [(0,0,0),(0,1,0),(1,1,0),(2,1,0)]
-        out0 = makeMatrix [Coord (0,1,0)]
+    let pt0 = makeMatrix' []
+        pt1 = makeMatrix' [(10,0,20)]
+        line0 = makeMatrix' [(0,0,0),(1,0,0),(2,0,0),(3,0,0)]
+        line1 = makeMatrix' [(0,0,0),(0,1,0),(1,1,0),(2,1,0)]
+        out0 = makeMatrix' [(0,1,0)]
     it "empty is grounded" $
       isGrounded pt0 `shouldBe` True
     it "point (10,0,20) is grounded" $
