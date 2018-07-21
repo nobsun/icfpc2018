@@ -48,7 +48,7 @@ fill :: Coord -> Matrix -> Matrix
 fill (Coord (x,y,z)) = IntMap.insertWith Set.union y (Set.singleton (x,z))
 
 void :: Coord -> Matrix -> Matrix
-void (Coord (x,y,z)) = undefined -- TODO!!
+void (Coord (x,y,z)) = IntMap.adjust (Set.delete (x,z)) y 
 
 data Voxel = Empty | Full deriving (Show, Eq)
 
