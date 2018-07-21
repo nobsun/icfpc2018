@@ -3,7 +3,7 @@ import Coordinate
 
 coordinateSpec :: Spec
 coordinateSpec = do
-  describe "ld" $ do
+  describe "ld and nd" $ do
     it "sld if mlen(ld) ≤ 5 then exactly 30 slds." $
       length (filter sld  [(x,y,z)|x<-[-5..5],y<-[-5..5],z<-[-5..5]]) `shouldBe` 30
       
@@ -12,6 +12,16 @@ coordinateSpec = do
 
     it "nd if mlen(d) <= 2 then exactly 18 nds." $
       length  [(x,y,z)|x<-[-2..2],y<-[-2..2],z<-[-2..2], 0 < mlen (x,y,z) && mlen (x,y,z) <= 2 && clen (x,y,z) == 1] `shouldBe` 18
+
+  describe "dim" $ do
+    it "region ((1,1,1),(1,1,1)) is dimension 0" $
+      dim ((1,1,1), (1,1,1)) `shouldBe` 0
+    it "region ((1,1,1),(0,1,1)) is dimension 1" $
+      dim ((1,1,1), (0,1,1)) `shouldBe` 1
+    it "region ((1,0,1),(0,1,1)) is dimension 2" $
+      dim ((1,0,1), (0,1,1)) `shouldBe` 2
+    it "region ((1,0,1),(0,1,0)) is dimension 3" $
+      dim ((1,0,1), (0,1,0)) `shouldBe` 3
 
 main :: IO ()
 main = hspec $ do
