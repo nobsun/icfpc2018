@@ -14,7 +14,7 @@ bit00011111 :: Word8
 bit00011111 = 31
 
 low5 :: Word8 -> Word8
-low5 n = n .|. bit00011111
+low5 n = n .&. bit00011111
 
 toWord :: Int -> Word8
 toWord n = fromIntegral (n `mod` 256)
