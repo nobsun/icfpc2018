@@ -6,8 +6,9 @@ module TraceDecoder where
 import Control.Applicative (pure, many)
 import Control.Monad
 import Data.Bits
+import qualified Data.ByteString as BS
 import Data.Word (Word8)
-import Data.Serialize.Get (Get, getWord8)
+import Data.Serialize.Get (Get, getWord8, runGet)
 
 import Coordinate (SLD, LLD, ND)
 import State (Command (..), Trace)
@@ -68,3 +69,11 @@ command = do
 
 trace :: Get Trace
 trace = many command
+
+
+readTraceFile :: FilePath -> IO Trace
+readTraceFile fname = do
+  s <- BS.readFile fname
+  case runGet trace s of
+    Left err -> error err
+    Right tr -> return tr
