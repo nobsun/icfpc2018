@@ -60,6 +60,7 @@ matrixSpec = do
         out0 = makeMatrix' [(0,1,0)]
         out1 = makeMatrix' [(1,1,1)]
         out2 = makeMatrix' [(10,0,20),(1,1,1)]
+        out3 = makeMatrix' [(0,1,0),(0,2,0),(1,2,0),(2,2,0)]
     it "empty is grounded." $
       isGrounded pt0 `shouldBe` True
     it "point (10,0,20) is grounded." $
@@ -76,6 +77,8 @@ matrixSpec = do
       isGrounded out1 `shouldBe` False
     it "one point is grounded but the another point is NOT grounded." $
       isGrounded out2 `shouldBe` False
+    it "grounded line lifted is NOT grounded." $
+      isGrounded out3 `shouldBe` False
 
 main :: IO ()
 main = hspec $ do
