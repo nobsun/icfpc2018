@@ -1,3 +1,5 @@
+{-# OPTIONS_GHC -Wall #-}
+
 module Matrix where
 
 import Coordinate
@@ -5,8 +7,6 @@ import Coordinate
 import Data.Bool (bool)
 import Data.IntMap (IntMap)
 import qualified Data.IntMap as IntMap
-import Data.Map (Map)
-import qualified Data.Map as Map
 import Data.Set (Set)
 import qualified Data.Set as Set
 
@@ -22,8 +22,8 @@ matrixCoords m = [Coord (x,y,z) | (y, xzs) <- IntMap.toList m, (x,z) <- Set.toLi
 
 isGrounded :: Matrix -> Bool
 isGrounded m =
-  case converge f (g0,u0) of
-    (g,u) -> Set.null u
+  case converge (g0,u0) of
+    (_g,u) -> Set.null u
   where
     g0 = Set.map (\(x,z) -> Coord (x,0,z)) $ IntMap.findWithDefault Set.empty 0 m  -- grounded   集合初期値: Coord Set of y == 0
     u0 = Set.fromList (matrixCoords m) Set.\\ g0                                   -- ungrounded 集合初期値: Coord Set of y /= 0
@@ -40,7 +40,7 @@ isGrounded m =
         s1 = Set.intersection s0 u
 
     -- grounded 集合と ungrounded 集合のペアが変化しなくなるまで繰り返し
-    converge f x = go (f x, x)
+    converge x0 = go (f x0, x0)
       where
         go (fx, x) = if fx == x then x else go (f fx, fx)
 
