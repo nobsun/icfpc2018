@@ -57,6 +57,8 @@ executables:
     - -Wall
     dependencies:
     - icfpc2018
+    - filepath
+    - directory
 
 tests:
   icfpc2018-test:
