@@ -13,7 +13,7 @@ import Data.Ord
 import Data.Set (Set)
 
 import Coordinate
-import Matrix
+import Matrix as MX
 import Model
 
 
@@ -188,7 +188,7 @@ execSingleNanobotCommand _mat bid (Fill nd) = do
           mat = stMatrix s
       case voxel mat c' of
         Empty -> do
-          SM.put $ s{ stMatrix = fill c' mat, stEnergy = stEnergy s + 12 }
+          SM.put $ s{ stMatrix = MX.fill c' mat, stEnergy = stEnergy s + 12 }
         Full -> do
           SM.put $ s{ stEnergy = stEnergy s + 6 }
 
@@ -201,7 +201,7 @@ execSingleNanobotCommand _mat bid (Void nd) = do
           mat = stMatrix s
       case voxel mat c' of
         Full -> do
-          SM.put $ s{ stMatrix = Matrix.void c' mat, stEnergy = stEnergy s - 12 }
+          SM.put $ s{ stMatrix = MX.void c' mat, stEnergy = stEnergy s - 12 }
         Empty -> do
           SM.put $ s{ stEnergy = stEnergy s + 3 }
 
