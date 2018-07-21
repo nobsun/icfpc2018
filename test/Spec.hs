@@ -101,6 +101,12 @@ matrixSpec = do
 
   describe "fill/void" $ do
     let m = makeMatrix' [(0,0,0),(0,1,0),(1,0,0)]
+    it "fill (0,0,0) make no change" $
+      fill (Coord (0,0,0)) m `shouldBe` m
+    it "fill (0,0,1) add new set" $
+      fill (Coord (0,0,1)) m `shouldBe` IntMap.fromList [(0, Set.fromList [(0,0),(0,1),(1,0)]),(1, Set.fromList [(0,0)])]
+    it "fill (1,2,1) add new map key" $
+      fill (Coord (1,2,1)) m `shouldBe` IntMap.fromList [(0, Set.fromList [(0,0),(1,0)]),(1, Set.fromList [(0,0)]),(2, Set.fromList [(1,1)])]
     it "void (0,0,0)" $
       void (Coord (0,0,0)) m `shouldBe` IntMap.fromList [(0, Set.fromList [(1,0)]), (1, Set.fromList [(0,0)])]
     it "void (0,1,0)" $
