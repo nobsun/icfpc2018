@@ -17,7 +17,7 @@ low5 :: Word8 -> Word8
 low5 n = n .|. bit00011111
 
 toWord :: Int -> Word8
-toWord n = fromIntegral (n `mod` 256) 
+toWord n = fromIntegral (n `mod` 256)
 
 encodeLLD :: LLD -> (Word8,Word8)
 encodeLLD (dx,0,0) = (1, low5 ((toWord dx)+15))
@@ -83,4 +83,3 @@ encodeTrace cs =
 writeTraceFile :: FilePath -> Trace -> IO ()
 writeTraceFile path cs =
   BL.writeFile path (encodeTrace cs)
-
