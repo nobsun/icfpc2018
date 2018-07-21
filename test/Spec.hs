@@ -23,6 +23,16 @@ coordinateSpec = do
     it "region ((1,0,1),(0,1,0)) is dimension 3" $
       dim ((1,0,1), (0,1,0)) `shouldBe` 3
 
+  describe "shape" $ do
+    it "region ((1,1,1),(1,1,1)) is Point" $
+      shape ((1,1,1), (1,1,1)) `shouldBe` Point
+    it "region ((0,1,1),(1,1,1)) is Line" $
+      shape ((0,1,1), (1,1,1)) `shouldBe` Line
+    it "region ((0,1,0),(1,1,1)) is Line" $
+      shape ((0,1,0), (1,1,1)) `shouldBe` Plane
+    it "region ((0,1,0),(1,0,1)) is Box" $
+      shape ((0,1,0), (1,0,1)) `shouldBe` Box
+
 main :: IO ()
 main = hspec $ do
   coordinateSpec
