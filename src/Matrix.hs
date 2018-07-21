@@ -13,10 +13,10 @@ import qualified Data.Set as Set
 type Matrix = IntMap (Set (Int,Int))
 
 makeMatrix :: [Coord] -> Matrix
-makeMatrix cs = IntMap.fromListWith Set.union [(y, Set.singleton (x,z)) | (x,y,z) <- cs]
+makeMatrix cs = IntMap.fromListWith Set.union [(y, Set.singleton (x,z)) | Coord (x,y,z) <- cs]
 
 matrixCoords :: Matrix -> [Coord]
-matrixCoords m = [(x,y,z) | (y, xzs) <- IntMap.toList m, (x,z) <- Set.toList xzs]
+matrixCoords m = [Coord (x,y,z) | (y, xzs) <- IntMap.toList m, (x,z) <- Set.toList xzs]
 
 isGrounded :: Matrix -> Bool
 isGrounded m = go (IntMap.toAscList m) (const True)
