@@ -1,6 +1,7 @@
 import Test.Hspec
 
 import Data.Bits
+import qualified Data.ByteString.Lazy as BL
 import Data.Word
 
 import BinaryEncoder
@@ -141,9 +142,22 @@ binaryEncoderSpec = do
       unwords (map showWord (encode (Fill (0,-1,0)))) `shouldBe` "01010011"
 
 
+traceFileSpec :: Spec
+traceFileSpec = do
+  describe "Trace Files" $ do
+    it "Halt" $
+      unwords (map showWord (BL.unpack (encodeTrace [Halt]))) `shouldBe` "11111111"
+
+    it "Wait Halt" $
+      unwords (map showWord (BL.unpack (encodeTrace [Wait,Halt]))) `shouldBe` "11111110 11111111"
+
+    it "Flip Flip Wait Halt" $
+      unwords (map showWord (BL.unpack (encodeTrace [Flip,Flip,Wait,Halt]))) `shouldBe` "11111101 11111101 11111110 11111111"
+
 
 main :: IO ()
 main = hspec $ do
   coordinateSpec
   matrixSpec
   binaryEncoderSpec
+  traceFileSpec

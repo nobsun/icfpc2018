@@ -1,6 +1,9 @@
 module BinaryEncoder where
 
 import Data.Bits
+import qualified Data.ByteString.Builder as BB
+import qualified Data.ByteString.Lazy as BL
+import Data.Monoid (mconcat)
 import Data.Word
 
 import Coordinate
@@ -72,3 +75,12 @@ encode (Fill nd) =
   [ 0 .|. (shiftL d 3) .|. 3]
   where
     d = encodeND nd
+
+encodeTrace :: Trace -> BL.ByteString
+encodeTrace cs =
+  BB.toLazyByteString (mconcat (map BB.word8 (concatMap encode cs)))
+
+writeTraceFile :: FilePath -> Trace -> IO ()
+writeTraceFile path cs =
+  BL.writeFile path (encodeTrace cs)
+
