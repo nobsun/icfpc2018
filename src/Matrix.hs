@@ -39,6 +39,7 @@ isGrounded m =
              ]
         s1 = Set.intersection s0 u
 
+    -- grounded 集合と ungrounded 集合のペアが変化しなくなるまで繰り返し
     converge f x
       | fx == x = x
       | otherwise = converge f fx
