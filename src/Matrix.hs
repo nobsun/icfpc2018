@@ -19,8 +19,12 @@ matrixCoords :: Matrix -> [Coord]
 matrixCoords m = [Coord (x,y,z) | (y, xzs) <- IntMap.toList m, (x,z) <- Set.toList xzs]
 
 isGrounded :: Matrix -> Bool
-isGrounded m = go (IntMap.toAscList m) (const True)
+isGrounded m = layered xs && go xs (const True)
   where
+    xs :: [(Int, Set (Int,Int))]
+    xs = IntMap.toAscList m
+    layered :: [(Int, a)] -> Bool
+    layered = and . zipWith (==) [0..] . map fst
     go :: [(Int, Set (Int,Int))] -> ((Int,Int) -> Bool) -> Bool
     go [] _prev = True
     go ((_y,xzs) : ls) prev = and table && go ls (\xz -> Map.lookup xz table == Just True)
