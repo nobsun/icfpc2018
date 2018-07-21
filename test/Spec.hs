@@ -20,7 +20,7 @@ coordinateSpec = do
   describe "ld and nd" $ do
     it "sld if mlen(ld) ≤ 5 then exactly 30 slds." $
       length (filter sld small) `shouldBe` 30
-      
+
     it "lld if mlen(ld) ≤ 15 then exactly 90 llds." $
       length (filter lld  large) `shouldBe` 90
 
@@ -29,23 +29,23 @@ coordinateSpec = do
 
   describe "dim" $ do
     it "region ((1,1,1),(1,1,1)) is dimension 0." $
-      dim (Coord (1,1,1), Coord (1,1,1)) `shouldBe` 0
+      dim (region (Coord (1,1,1)) (Coord (1,1,1))) `shouldBe` 0
     it "region ((1,1,1),(0,1,1)) is dimension 1." $
-      dim (Coord (1,1,1), Coord (0,1,1)) `shouldBe` 1
+      dim (region (Coord (1,1,1)) (Coord (0,1,1))) `shouldBe` 1
     it "region ((1,0,1),(0,1,1)) is dimension 2." $
-      dim (Coord (1,0,1), Coord (0,1,1)) `shouldBe` 2
+      dim (region (Coord (1,0,1)) (Coord (0,1,1))) `shouldBe` 2
     it "region ((1,0,1),(0,1,0)) is dimension 3." $
-      dim (Coord (1,0,1), Coord (0,1,0)) `shouldBe` 3
+      dim (region (Coord (1,0,1)) (Coord (0,1,0))) `shouldBe` 3
 
   describe "shape" $ do
     it "region ((1,1,1),(1,1,1)) is Point." $
-      shape (Coord (1,1,1), Coord (1,1,1)) `shouldBe` Point
+      shape (region (Coord (1,1,1)) (Coord (1,1,1))) `shouldBe` Point
     it "region ((0,1,1),(1,1,1)) is Line." $
-      shape (Coord (0,1,1), Coord (1,1,1)) `shouldBe` Line
+      shape (region (Coord (0,1,1)) (Coord (1,1,1))) `shouldBe` Line
     it "region ((0,1,0),(1,1,1)) is Line." $
-      shape (Coord (0,1,0), Coord (1,1,1)) `shouldBe` Plane
+      shape (region (Coord (0,1,0)) (Coord (1,1,1))) `shouldBe` Plane
     it "region ((0,1,0),(1,0,1)) is Box." $
-      shape (Coord (0,1,0), Coord (1,0,1)) `shouldBe` Box
+      shape (region (Coord (0,1,0)) (Coord (1,0,1))) `shouldBe` Box
 
 matrixSpec :: Spec
 matrixSpec = do
