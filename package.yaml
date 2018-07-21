@@ -30,6 +30,9 @@ dependencies:
 library:
   source-dirs: src
 
+# ghc-options:
+# - -Wall
+
 executables:
   icfpc2018-exe:         &icfpc2018-exe
     main:                Main.hs
