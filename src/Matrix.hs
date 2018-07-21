@@ -25,8 +25,8 @@ isGrounded m =
   case converge f (g0,u0) of
     (g,u) -> Set.null u
   where
-    g0 = Set.map (\(x,z) -> Coord (x,0,z)) $ IntMap.findWithDefault Set.empty 0 m  -- Coord Set of y == 0
-    u0 = Set.fromList (matrixCoords m) Set.\\ g0                                   -- Coord Set of y /= 0
+    g0 = Set.map (\(x,z) -> Coord (x,0,z)) $ IntMap.findWithDefault Set.empty 0 m  -- grounded   集合初期値: Coord Set of y == 0
+    u0 = Set.fromList (matrixCoords m) Set.\\ g0                                   -- ungrounded 集合初期値: Coord Set of y /= 0
 
     f (g,u) = (g `Set.union` s1, u Set.\\ s1)
       where
