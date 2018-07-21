@@ -31,9 +31,11 @@ isGrounded m =
     f (g,u) = (g `Set.union` s1, u Set.\\ s1)
       where
         s0 = Set.fromList
-             [Coord c
+             [ Coord c
              | Coord (x,y,z) <- Set.toList g
              , c <- [(x-1,y,z),(x+1,y,z),(x,y-1,z),(x,y+1,z),(x,y,z-1),(x,y,z+1)]
+             -- Coord の要素に対して範囲 [0, R - 1] を見ていなくて危険に見えるが、
+             -- 以下の intersection で、問題のない Coord のみが取り出されるので問題なし
              ]
         s1 = Set.intersection s0 u
 
