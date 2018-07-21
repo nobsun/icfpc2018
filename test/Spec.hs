@@ -54,19 +54,28 @@ matrixSpec = do
   describe "isGrounded" $ do
     let pt0 = makeMatrix' []
         pt1 = makeMatrix' [(10,0,20)]
+        pt2 = makeMatrix' [(1,0,2), (3,0,4)]
         line0 = makeMatrix' [(0,0,0),(1,0,0),(2,0,0),(3,0,0)]
         line1 = makeMatrix' [(0,0,0),(0,1,0),(1,1,0),(2,1,0)]
         out0 = makeMatrix' [(0,1,0)]
-    it "empty is grounded" $
+        out1 = makeMatrix' [(1,1,1)]
+        out2 = makeMatrix' [(10,0,20),(1,1,1)]
+    it "empty is grounded." $
       isGrounded pt0 `shouldBe` True
-    it "point (10,0,20) is grounded" $
+    it "point (10,0,20) is grounded." $
       isGrounded pt1 `shouldBe` True
-    it "linear line is grounded" $
+    it "2 splitted points (1,0,2) and (3,0,4) is grounded." $
+      isGrounded pt1 `shouldBe` True
+    it "linear line is grounded." $
       isGrounded line0 `shouldBe` True
-    it "zigzag line is grounded" $
+    it "zigzag line is grounded." $
       isGrounded line1 `shouldBe` True
-    it "point (0,1,0) is NOT grounded" $
+    it "point (0,1,0) is NOT grounded." $
       isGrounded out0 `shouldBe` False
+    it "point (1,1,1) is NOT grounded." $
+      isGrounded out1 `shouldBe` False
+    it "one point is grounded but the another point is NOT grounded." $
+      isGrounded out2 `shouldBe` False
 
 main :: IO ()
 main = hspec $ do
