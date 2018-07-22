@@ -10,6 +10,7 @@ import Text.Printf
 import Model
 import TraceDecoder
 import State
+import Sim
 
 
 data Options
