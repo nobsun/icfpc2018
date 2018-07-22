@@ -66,6 +66,9 @@ command = do
       | w .&. 0b111 == 0b011 -> do
           nd' <- nd $ w `shiftR` 3
           return $ Fill nd'
+      | w .&. 0b111 == 0b010 -> do
+          nd' <- nd $ w `shiftR` 3
+          return $ Void nd'
 
 trace :: Get Trace
 trace = many command

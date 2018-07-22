@@ -217,6 +217,10 @@ traceDecoderSpec = do
     it "Fill <0,-1,0> is encoded as [01010011]" $
       runGet trace (BS.pack [0b01010011]) `shouldBe` Right [Fill (0,-1,0)]
 
+  describe "Void" $ do
+    it "Void <1,0,1> is encoded as [10111010]" $
+      runGet trace (BS.pack [0b10111010]) `shouldBe` Right [Void (1,0,1)]
+
 main :: IO ()
 main = hspec $ do
   coordinateSpec

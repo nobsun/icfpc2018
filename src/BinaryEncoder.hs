@@ -76,6 +76,11 @@ encode (Fill nd) =
   where
     d = encodeND nd
 
+encode (Void nd) =
+  [ 0 .|. (shiftL d 2) .|. 3]
+  where
+    d = encodeND nd
+
 encodeTrace :: Trace -> BL.ByteString
 encodeTrace cs =
   BB.toLazyByteString (mconcat (map BB.word8 (concatMap encode cs)))
