@@ -253,8 +253,13 @@ simSpec = do
     it "result of LA001_tgt.mdl + LA001.nbt should have energy 335123860" $
       let s0 = initialState mdl nbt
           s1 = execAll s0
-      in stEnergy s1 `shouldBe` 335123860      
+      in stEnergy s1 `shouldBe` 335123860
 
+  describe "active nanobot cost" $ do
+    it "computes active nanobot cost based on the number of bots in pre-state" $ do
+      let s0 = initialState (Model 20 (makeMatrix [])) []
+          s1 = execOneStepCommands [(1,Fission (0,1,0) 10)] s0
+      stEnergy s1 `shouldBe` 24044 -- 24044 = 24 + 3*20*20*20 + 20*1
 
 main :: IO ()
 main = hspec $ do
