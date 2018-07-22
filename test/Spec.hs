@@ -167,6 +167,10 @@ binaryEncoderSpec = do
     it "Void <1,0,1> is encoded as [10111010]" $
       unwords (map showWord (encode (Void (1,0,1)))) `shouldBe` "10111010"
 
+  describe "GFill" $ do
+    it "GFill <0,-1,0> <10,-15,20> is encoded as [01010001] [00101000] [00001111] [00110010]" $
+      unwords (map showWord (encode (GFill (0,-1,0) (10,-15,20)))) `shouldBe` "01010001 00101000 00001111 00110010"
+
 
 traceFileSpec :: Spec
 traceFileSpec = do
