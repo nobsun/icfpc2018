@@ -40,7 +40,7 @@ main = do
   opt <- execParser parserInfo
   m@(Model _ mat) <- readModel $ optModel opt
   t <- readTraceFile $ optTrace opt
-  let s = initialState m t
+  let s = initialState (Just m) Nothing t
       s2 = execAll s
       success = mat == stMatrix s2
   printf "Assembly: %s\n" $ if success then "SUCCESS" else "FAILURE"

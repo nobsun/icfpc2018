@@ -1,6 +1,7 @@
 {-# OPTIONS_GHC -Wall #-}
 module State where
 
+import Data.Maybe (mapMaybe);
 import Data.IntMap.Strict (IntMap)
 import qualified Data.IntMap.Strict as IntMap
 import Data.IntSet (IntSet)
@@ -19,6 +20,8 @@ data SystemState
   , stHarmonics :: !Bool
   , stResolution :: !Int -- TODO: Matrix自体に持たせる
   , stMatrix :: Matrix
+  , stTgtMatrix :: Maybe Matrix   -- Target
+  , stSrcMatrix :: Maybe Matrix   -- Source
   , stBots :: !(IntMap Bot) -- BotId to Bot mapping
   , stTrace :: Trace
   } deriving (Eq, Ord, Show)
@@ -43,13 +46,16 @@ stateIsWellformed s = and
   ]
 
 
-initialState :: Model -> Trace -> SystemState
-initialState (Model res _mat) trace =
+initialState :: Maybe Model -> Maybe Model -> Trace -> SystemState
+initialState Nothing   Nothing   _     = error "no model given!"
+initialState mTgtModel mSrcModel trace =
   SystemState
   { stEnergy = 0
   , stHarmonics = False
-  , stResolution = res
+  , stResolution = head (mapMaybe (fmap mdResolution) [mTgtModel, mSrcModel])
   , stMatrix = makeMatrix []
+  , stTgtMatrix = fmap mdMatrix mTgtModel
+  , stSrcMatrix = fmap mdMatrix mSrcModel
   , stBots = IntMap.singleton 1 $
       Bot
       { botId = 1
