@@ -9,11 +9,11 @@ import qualified Data.IntMap as IntMap
 import qualified Data.Set as Set
 import Data.Word
 
-import BinaryEncoder
 import Coordinate
 import Matrix
 import State
 import TraceDecoder
+import TraceEncoder
 
 makeMatrix' :: [(Int, Int, Int)] -> Matrix
 makeMatrix' = makeMatrix . map Coord
@@ -118,8 +118,8 @@ showWord :: Word8 -> String
 showWord w =
   [if testBit w i then '1' else '0' | i<-[7,6..0]]
 
-binaryEncoderSpec :: Spec
-binaryEncoderSpec = do
+traceEncoderSpec :: Spec
+traceEncoderSpec = do
   describe "Halt" $ do
     it "Halt is encoded as [11111111]8." $
       unwords (map showWord (encodeCommand' Halt)) `shouldBe` "11111111"
@@ -247,6 +247,6 @@ main :: IO ()
 main = hspec $ do
   coordinateSpec
   matrixSpec
-  binaryEncoderSpec
+  traceEncoderSpec
   traceFileSpec
   traceDecoderSpec

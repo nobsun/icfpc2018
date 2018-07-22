@@ -5,7 +5,7 @@ import System.FilePath ((</>), (<.>))
 import System.Directory (getDirectoryContents, doesDirectoryExist)
 
 
-import BinaryEncoder (writeTraceFile)
+import TraceEncoder (writeTraceFile)
 import OgaBot (getOgaBotTrace)
 import Model (readModel)
 

@@ -1,4 +1,4 @@
-module BinaryEncoder
+module TraceEncoder
   ( encodeCommand
   , encodeCommand'
   , encodeTrace

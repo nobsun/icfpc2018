@@ -2,7 +2,7 @@ module Main where
 
 import System.Environment
 
-import BinaryEncoder
+import TraceEncoder
 import OgaBot
 import Model
 
