@@ -21,7 +21,7 @@ import State
 data B = B
   { bBot    :: Bot       -- the bot
   , bTrace  :: [Trace]   -- traces of the bot (including fusion's)
-  , bRange  :: (Int,Int) -- z-axis in charge
+  , bRange  :: (Int,Int) -- x-axis in charge
   }
 
 type BState a = State B a
@@ -184,6 +184,7 @@ parallelAssemble md@(Model r mat) = do
       let b'' = execState (parallelAssemble md) b'
       assemble md
       fusion b''
+      sMoveAbs (ra,r-1,0)
     
 assemble :: Model -> BState ()
 assemble (Model r mat) = do
@@ -193,10 +194,11 @@ assemble (Model r mat) = do
     | i<-[0..r-2]
     , let mset = IntMap.lookup i mat
     ]
+  sMoveAbs (ra,r-1,0)
 
 fillFloor :: Int -> [(Int,Int)] -> BState ()
 fillFloor fno xs =
-  sequence_ (sMoveDy 1 : map (fillFloor1 fno) xs)
+  sequence_ (map (fillFloor1 fno) xs)
 
 fillFloor1 :: Int -> (Int,Int) -> BState ()
 fillFloor1 y (x,z) = do
