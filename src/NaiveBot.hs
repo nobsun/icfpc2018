@@ -29,8 +29,8 @@ import State
 
 data B = B
   { bBot    :: Bot       -- the bot
-  , bTrace  :: [Trace]   -- traces of the bot (including fusion's)
-  , bRange  :: (Int,Int) -- x-axis [a,b) in charge.
+  , bTrace  :: [Trace]   -- ボットのコマンドリスト. n番目の要素はnステップ時のfusion済みボットのコマンドリストが入る
+  , bRange  :: (Int,Int) -- ボットが担当するx軸の範囲 [a,b)
   }
 
 type BState a = State B a
@@ -76,7 +76,8 @@ sMoveDz n = do
        , bTrace = [SMove (0,0,n)]:bTrace
        }
 
--- absolute coord
+-- 絶対座標で移動先を指定する.
+-- x y z の順で直線移動するので, その実装が影響する可能性はある
 sMoveAbs :: (Int,Int,Int) -> BState ()
 sMoveAbs (x,y,z) = do
   B{bBot=Bot{botPos=Coord(cx,cy,cz)}} <- get
@@ -106,11 +107,14 @@ cVoid nd = do
     f b@B{ bTrace = bTrace} =
       b{ bTrace = [Void nd]:bTrace}
 
+-- (1,0,0)固定でボットを生成する.
 fissionX :: BState B
 fissionX = do
   modify f
   B{bBot=Bot{botId=botId,botPos=Coord(x,y,z)}, bTrace=bTrace, bRange=(ra,rb)} <- get
-  return $ B{ bBot    = Bot{botId=botId+1, botPos=Coord(x+1,y,z), botSeeds=IntSet.empty}
+  return $ B{ bBot    = Bot{botId=botId+1, botPos=Coord(x+1,y,z), botSeeds=IntSet.empty} --seedの状態は管理していない
+            -- bTraceのn番目の要素はnステップ時のコマンドリストなので, 生成される前の時刻分は空リストで埋めておく
+            -- (fusion時にマージできるように)
             , bTrace  = take (length bTrace) (repeat [])
             , bRange  = (rb, rb+rb-ra)
             }
@@ -123,9 +127,11 @@ fissionX = do
 
 fusion :: B -> BState ()
 fusion B{bBot=Bot{botPos=Coord(x',y',z')}, bTrace=bTrace'} = do
-  sMoveAbs (x'-1,y',z')
+  sMoveAbs (x'-1,y',z') -- fusionするためにボットの横(x軸)へ移動する
   B{bTrace=bTrace} <- get
   let len = max (length bTrace) (length bTrace')
+      -- fusionのタイミングでコマンドリストをマージする
+      -- トレースが長いほうにあわせるために, 短いほうはWaitをいれておく
       merged = reverse (take len (zipWith (++) (reverse bTrace ++ repeat[Wait]) (reverse bTrace' ++ repeat[Wait])))
   modify (f merged)
   where
@@ -298,7 +304,8 @@ reassemble (Model r srcmat) (Model _ tgtmat) = do
   sequence_ $ concat
     [ [ sMoveAbs (x,y, if dir then 0 else r-1)] ++ -- z軸の端に移動する正規化(無駄な動きをするが分かりやすいので)
       [ reconst ty dir (x,y,z)
-      -- sortの順番を (z, dir) の順で判定させる
+      -- sortの順番を (z, dir) の順で判定させる (dir=direction)
+      -- tgt のほう srcのあとに持ってきたいので z座標をずらしている
       | ((_x,z),ty) <- orderBy dir $ zip srcs (repeat (not dir, 'S')) ++ zip (map (adjustz dir) tgts) (repeat (dir, 'T'))
       ]
       ++ [sMoveAbs (x,y, if dir then r-1 else 0)] -- z軸のもう一方の端に移動する正規化(同上)
@@ -314,23 +321,25 @@ reassemble (Model r srcmat) (Model _ tgtmat) = do
 
 fillFloor :: (Int,Int,Int) -> BState ()
 fillFloor (x,y,z) = do
-  sMoveAbs (x,y+1,z)
-  cFill (0,-1,0)
+  sMoveAbs (x,y+1,z) -- 生成するブロックの上に移動
+  cFill (0,-1,0)     -- 自分の真下に生成
 
 voidFloor :: (Int,Int,Int) -> BState ()
 voidFloor (x,y,z) = do
-  sMoveAbs (x,y+1,z)
-  cVoid (0,-1,0)
+  sMoveAbs (x,y+1,z) -- 壊すブロックの上に移動
+  cVoid (0,-1,0)     -- 自分の真下を壊す
 
 reconst :: (Bool, Char) -> Bool -> (Int,Int,Int) -> BState ()
 reconst (_,'S') dir (x,y,z) = do
+  -- S はsrcなので壊すべき対象
   sMoveAbs (x,y,z+dz)
-  cVoid (0,0,-dz)
+  cVoid (0,0,-dz) -- ボットが進んでいる方向(z軸)正面のブロックを壊す
   where
     dz = if dir then -1 else 1
 reconst (_,'T') dir (x,y,z) = do -- zは調整済みなので注意
+  -- T はtgtなので生成すべき対象
   sMoveAbs (x,y,z)
-  cFill (0,0,dz)
+  cFill (0,0,dz) -- ボットが進んでる方向(z軸)と逆(おしり)に生成する
   where
     dz = if dir then -1 else 1
 
