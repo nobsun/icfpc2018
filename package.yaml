@@ -24,6 +24,11 @@ dependencies:
 - bytestring
 - containers
 - mtl
+- time
+- filepath
+- directory
+- process
+- time-locale-compat
 - extra
 - cereal
 
