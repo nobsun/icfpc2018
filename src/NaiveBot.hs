@@ -4,6 +4,7 @@ module NaiveBot
   ( getAssembleTrace
   , getAssembleTrace'
   , getDisassembleTrace
+  , getDisassembleTrace'
   ) where
 
 import Control.Monad (replicateM)
@@ -16,12 +17,13 @@ import Coordinate
 import Model
 import State
 
+
 -------------------------------------------------------
 
 data B = B
   { bBot    :: Bot       -- the bot
   , bTrace  :: [Trace]   -- traces of the bot (including fusion's)
-  , bRange  :: (Int,Int) -- x-axis in charge
+  , bRange  :: (Int,Int) -- x-axis [a,b) in charge.
   }
 
 type BState a = State B a
@@ -143,13 +145,9 @@ cHalt = do
 
 -------------------------------------------------------
 
-getAssembleTrace :: Model -> Trace
-getAssembleTrace =
-  concat . getAssembleTrace'
-
-getAssembleTrace' :: Model -> [Trace]
-getAssembleTrace' md@(Model r _mat) =
-  reverse $ bTrace $ execState (parallelAssembleBot md)
+getTrace :: (Model -> BState ()) -> Model -> [Trace]
+getTrace bot md@(Model r _mat) =
+  reverse $ bTrace $ execState (bot md)
   $ B{ bBot   = Bot{botPos=Coord(0,0,0), botId=1, botSeeds=IntSet.empty}
      , bTrace = []
      , bRange = (0, q+(if rest > 0 then 1 else 0))
@@ -157,18 +155,40 @@ getAssembleTrace' md@(Model r _mat) =
   where
     (q,rest) = r`divMod`40 -- max 40 parallel
 
+getAssembleTrace :: Model -> Trace
+getAssembleTrace =
+  concat . getAssembleTrace'
+
+getAssembleTrace' :: Model -> [Trace]
+getAssembleTrace' =
+  getTrace assembleRoot
+
 getDisassembleTrace :: Model -> Trace
-getDisassembleTrace m =
-  []
+getDisassembleTrace =
+  concat . getDisassembleTrace'
+
+getDisassembleTrace' :: Model -> [Trace]
+getDisassembleTrace' =
+  getTrace disassembleRoot
+
 
 -------------------------------------------------------
 
-parallelAssembleBot :: Model -> BState ()
-parallelAssembleBot md@(Model r _mat) = do
+assembleRoot :: Model -> BState ()
+assembleRoot md@(Model r _mat) = do
   cFlip
   parallelAssemble md
   cFlip
   sMoveAbs (0,r-1,0)
+  sMoveAbs (0,0,0)
+  cHalt
+
+disassembleRoot:: Model -> BState ()
+disassembleRoot md@(Model r _mat) = do
+  sMoveAbs (0,r-1,0)
+  cFlip
+  parallelDisassemble md
+  cFlip
   sMoveAbs (0,0,0)
   cHalt
 
@@ -185,7 +205,21 @@ parallelAssemble md@(Model r mat) = do
       assemble md
       fusion b''
       sMoveAbs (ra,r-1,0)
-    
+
+parallelDisassemble :: Model -> BState ()
+parallelDisassemble md@(Model r mat) = do
+  B{bRange=(ra,rb)} <- get
+  case rb > r-1 of
+    True -> do
+      disassemble md
+    _    -> do
+      sMoveAbs (rb-1,r-1,0)
+      b' <- fissionX
+      let b'' = execState (parallelDisassemble md) b'
+      disassemble md
+      fusion b''
+      sMoveAbs (ra,0,0)
+
 assemble :: Model -> BState ()
 assemble (Model r mat) = do
   B{bRange=(ra,rb)} <- get
@@ -196,16 +230,31 @@ assemble (Model r mat) = do
     ]
   sMoveAbs (ra,r-1,0)
 
+disassemble :: Model -> BState ()
+disassemble (Model r mat) = do
+  B{bRange=(ra,rb)} <- get
+  sequence_
+    [ voidFloor i (maybe [] (filter (\(x,z)->ra<=x&&x<rb) . Set.toList) mset)
+    | i<-[r-1,r-2..0]
+    , let mset = IntMap.lookup i mat
+    ]
+  sMoveAbs (ra,0,0)
+
 fillFloor :: Int -> [(Int,Int)] -> BState ()
 fillFloor fno xs =
-  sequence_ (map (fillFloor1 fno) xs)
+  mapM_ f xs
+  where
+    f :: (Int,Int) -> BState ()
+    f (x,z) = do
+      sMoveAbs (x,fno+1,z)
+      fillBottom
 
-fillFloor1 :: Int -> (Int,Int) -> BState ()
-fillFloor1 y (x,z) = do
-  sMoveAbs (x,y+1,z)
-  fillBottom
-
-naiveDisassembleBot :: Model -> BState ()
-naiveDisassembleBot (Model r mat) = do
-  return ()
+voidFloor :: Int -> [(Int,Int)] -> BState ()
+voidFloor fno xs =
+  mapM_ f xs
+  where
+    f :: (Int,Int) -> BState ()
+    f (x,z) = do
+      sMoveAbs (x,fno+1,z)
+      voidBottom
 
