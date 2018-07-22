@@ -297,7 +297,7 @@ reassemble (Model r srcmat) (Model _ tgtmat) = do
   let ls = zip (concat (repeat [True,False]))
         [ (x, y, srcs, tgts)
         | y <- [0..r-2]
-        , x <- [ra..rb-1]
+        , x <- [ra..min (rb-1) (r-2)]
         , let srcs = maybe [] (filter ((==x).fst) . Set.toList) (IntMap.lookup y srcmat)
         , let tgts = maybe [] (filter ((==x).fst) . Set.toList) (IntMap.lookup y tgtmat)
         ]
