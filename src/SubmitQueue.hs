@@ -1,15 +1,19 @@
 {-# OPTIONS -Wall #-}
 
-module SubmitQueue where
+module SubmitQueue (
+  submitGateway,
+  ) where
 
-import Control.Concurrent (threadDelay)
+import Control.Monad (void, forever)
+import Control.Concurrent (threadDelay, forkIO)
 import Control.Concurrent.Chan (Chan, newChan, readChan, writeChan)
 import System.IO.Error (tryIOError)
+import Data.List (isSuffixOf)
 import Data.Time
   (NominalDiffTime, diffUTCTime, getCurrentTime,
    FormatTime, formatTime)
 import Data.Time.Locale.Compat (defaultTimeLocale)
-import System.FilePath ((</>))
+import System.FilePath ((</>), (<.>))
 import System.Directory (renameFile)
 import System.Process (rawSystem, readProcess)
 import System.Exit (ExitCode (..))
@@ -17,29 +21,41 @@ import System.Exit (ExitCode (..))
 import Path (submitExport)
 
 
+submitGateway :: IO ()
+submitGateway = do
+  putLog <- do
+    put <- newLog
+    return $ \s -> do
+      ts <- formatLogStamp <$> getCurrentTime
+      put $ ts ++ ": " ++ s
+  queue  <- newChan
+  void . forkIO . submitLoop putLog $ submit queue
+  waitRequest putLog queue
+
 interval :: NominalDiffTime
 interval = fromInteger $ 15 * 60
 
-formatLogstamp :: FormatTime t => t -> String
-formatLogstamp = formatTime defaultTimeLocale "%Y-%m-%d %HH:%MM:%SS"
+newLog :: IO (String -> IO ())
+newLog = do
+  c <- newChan
+  void . forkIO . forever $ putStrLn =<< readChan c
+  return $ writeChan c
 
-putLog :: String -> IO ()
-putLog s = do
-  ts <- formatLogstamp <$> getCurrentTime
-  putStrLn $ ts ++ ": " ++ s
+formatLogStamp :: FormatTime t => t -> String
+formatLogStamp = formatTime defaultTimeLocale "%Y-%m-%d %HH:%MM:%SS"
 
-submitLoop :: IO () -> IO ()
-submitLoop submit_ =
+submitLoop :: (String -> IO ()) -> IO () -> IO ()
+submitLoop putLog_ submit_ =
     loop Nothing
   where
+    putLog = putLog_ . ("submit: " ++)
     loop maySubmitTs = do
       let delayRest prev = do
             current <- getCurrentTime
             let waitt = interval - diffUTCTime current prev
-            putStrLn $ unwords
-              [ formatLogstamp current ++ ":",
-                "previouns post at ",
-                formatLogstamp prev ++ ".",
+            putLog $ unwords
+              [ "previouns post at ",
+                formatLogStamp prev ++ ".",
                 "so, wait", show waitt ++ "." ]
             threadDelay $ fromEnum waitt `quot` 1000000
       maybe (return ()) delayRest maySubmitTs
@@ -48,18 +64,37 @@ submitLoop submit_ =
         =<< tryIOError submit_
       loop . Just =<< getCurrentTime
 
-formatFilestamp :: FormatTime t => t -> String
-formatFilestamp = formatTime defaultTimeLocale "%d-%H%M%D"
+formatFileStamp :: FormatTime t => t -> String
+formatFileStamp = formatTime defaultTimeLocale "%d-%H%M%D"
 
-submit :: Chan String -> IO ()
-submit c = do
-  let queuedir = "/home/icfpc2018-queue"
-  fn <- readChan c
-  ts <- formatFilestamp <$> getCurrentTime
+queuedir :: FilePath
+queuedir = "/home/icfpc2018-queue"
+
+submit :: Chan FilePath -> IO ()
+submit q = do
+  fn <- readChan q
+  ts <- formatFileStamp <$> getCurrentTime
   let dfn = ts ++ "_" ++ fn
   renameFile (queuedir </> fn) (submitExport </> dfn)
   ioExitCode =<< rawSystem "./lib/apply-submit.sh" [dfn]
 
+waitRequest :: (String -> IO ()) -> Chan FilePath -> IO ()
+waitRequest putLog_ q = do
+  let postdir = "/home/icfpc2018-post/"
+      putLog = putLog_ . ("request: " ++)
+      process req = case req of
+        [_d, _ev, fn] | ".zip" `isSuffixOf` fn -> do
+          ts <- formatFileStamp <$> getCurrentTime
+          let qfn = ts <.> "zip"
+          putLog $ "enqueue: " ++ fn ++ " --> " ++ qfn
+          renameFile (postdir </> fn) (queuedir </> qfn)
+          writeChan q qfn
+        [_d, _ev, fn] ->
+          putLog $ "not zip, ignored: " ++ fn
+        _             -> return ()
+  reqs <- map words . lines
+          <$> readProcess "/usr/bin/inotifywait" ["-m", "-e", "close_write", postdir] ""
+  mapM_ process reqs
 
 runExitCode :: a -> (Int -> a) -> ExitCode -> a
 runExitCode s e ec = case ec of
