@@ -13,6 +13,7 @@ import Data.Time
   (NominalDiffTime, diffUTCTime, getCurrentTime,
    FormatTime, formatTime)
 import Data.Time.Locale.Compat (defaultTimeLocale)
+import System.IO (stdout, BufferMode (LineBuffering), hSetBuffering)
 import System.FilePath ((</>), (<.>))
 import System.Directory (renameFile)
 import System.Process (rawSystem, readProcess)
@@ -23,6 +24,7 @@ import Path (submitExport)
 
 submitGateway :: IO ()
 submitGateway = do
+  hSetBuffering stdout LineBuffering
   putLog <- do
     put <- newLog
     return $ \s -> do
