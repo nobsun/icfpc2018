@@ -6,7 +6,6 @@ import Data.Bits
 import qualified Data.ByteString.Lazy as BL
 import qualified Data.ByteString as BS
 import qualified Data.IntMap as IntMap
-import Data.Serialize.Get (runGet)
 import qualified Data.Set as Set
 import Data.Word
 
@@ -14,7 +13,7 @@ import BinaryEncoder
 import Coordinate
 import Matrix
 import State
-import TraceDecoder (trace)
+import TraceDecoder
 
 makeMatrix' :: [(Int, Int, Int)] -> Matrix
 makeMatrix' = makeMatrix . map Coord
@@ -192,57 +191,57 @@ traceDecoderSpec :: Spec
 traceDecoderSpec = do
   describe "Halt" $ do
     it "Halt is encoded as [11111111]8." $
-      runGet trace (BS.pack [0b11111111]) `shouldBe` Right [Halt]
+      decodeTrace (BL.pack [0b11111111]) `shouldBe` Right [Halt]
 
   describe "Wait" $ do
     it "Wait is encoded as [11111110]8." $
-      runGet trace (BS.pack [0b11111110]) `shouldBe` Right [Wait]
+      decodeTrace (BL.pack [0b11111110]) `shouldBe` Right [Wait]
 
   describe "Flip" $ do
     it "Flip is encoded as [11111101]8." $
-      runGet trace (BS.pack [0b11111101]) `shouldBe` Right [Flip]
+      decodeTrace (BL.pack [0b11111101]) `shouldBe` Right [Flip]
 
   describe "SMove" $ do
     it "SMove <12,0,0> is encoded as [00010100] [00011011]." $
-      runGet trace (BS.pack [0b00010100, 0b00011011]) `shouldBe` Right [SMove (12,0,0)]
+      decodeTrace (BL.pack [0b00010100, 0b00011011]) `shouldBe` Right [SMove (12,0,0)]
 
     it "SMove <0,0,-4> is encoded as [00110100] [00001011]." $
-      runGet trace (BS.pack [0b00110100, 0b00001011]) `shouldBe` Right [SMove (0,0,-4)]
+      decodeTrace (BL.pack [0b00110100, 0b00001011]) `shouldBe` Right [SMove (0,0,-4)]
 
   describe "LMove" $ do
     it "LMove <3,0,0> <0,-5,0> is encoded as [10011100] [00001000]." $
-      runGet trace (BS.pack [0b10011100, 0b00001000]) `shouldBe` Right [LMove (3,0,0) (0,-5,0)]
+      decodeTrace (BL.pack [0b10011100, 0b00001000]) `shouldBe` Right [LMove (3,0,0) (0,-5,0)]
 
     it "LMove <0,-2,0> <0,0,2> is encoded as [11101100] [01110011]." $
-      runGet trace (BS.pack [0b11101100, 0b01110011]) `shouldBe` Right [LMove (0,-2,0) (0,0,2)]
+      decodeTrace (BL.pack [0b11101100, 0b01110011]) `shouldBe` Right [LMove (0,-2,0) (0,0,2)]
              
   describe "FusionP" $ do
     it "FusionP <-1,1,0> is encoded as [00111111]." $
-      runGet trace (BS.pack [0b00111111]) `shouldBe` Right [FusionP (-1,1,0)]
+      decodeTrace (BL.pack [0b00111111]) `shouldBe` Right [FusionP (-1,1,0)]
 
   describe "FusionS" $ do
     it "FusionS <1,-1,0> is encoded as [10011110]." $
-      runGet trace (BS.pack [0b10011110]) `shouldBe` Right [FusionS (1,-1,0)]
+      decodeTrace (BL.pack [0b10011110]) `shouldBe` Right [FusionS (1,-1,0)]
 
   describe "Fission" $ do
     it "Fission <0,0,1> 5 is encoded as [01110101] [00000101]" $
-      runGet trace (BS.pack [0b01110101, 0b00000101]) `shouldBe` Right [Fission (0,0,1) 5]
+      decodeTrace (BL.pack [0b01110101, 0b00000101]) `shouldBe` Right [Fission (0,0,1) 5]
 
   describe "Fill" $ do
     it "Fill <0,-1,0> is encoded as [01010011]" $
-      runGet trace (BS.pack [0b01010011]) `shouldBe` Right [Fill (0,-1,0)]
+      decodeTrace (BL.pack [0b01010011]) `shouldBe` Right [Fill (0,-1,0)]
 
   describe "Void" $ do
     it "Void <1,0,1> is encoded as [10111010]" $
-      runGet trace (BS.pack [0b10111010]) `shouldBe` Right [Void (1,0,1)]
+      decodeTrace (BL.pack [0b10111010]) `shouldBe` Right [Void (1,0,1)]
 
   describe "GFill" $ do
     it "GFill <0,-1,0> <10,-15,20> is encoded as [01010001] [00101000] [00001111] [00110010]." $
-      runGet trace (BS.pack [0b01010001, 0b00101000, 0b00001111, 0b00110010]) `shouldBe` Right [GFill (0,-1,0) (10,-15,20)]
+      decodeTrace (BL.pack [0b01010001, 0b00101000, 0b00001111, 0b00110010]) `shouldBe` Right [GFill (0,-1,0) (10,-15,20)]
 
   describe "GVoid" $ do
     it "GVoid <1,0,0> <5,5,-5> is encoded as [10110000] [00100011] [00100011] [00011001]." $
-      runGet trace (BS.pack [0b10110000, 0b00100011, 0b00100011, 0b00011001]) `shouldBe` Right [GVoid (1,0,0) (5,5,-5)]
+      decodeTrace (BL.pack [0b10110000, 0b00100011, 0b00100011, 0b00011001]) `shouldBe` Right [GVoid (1,0,0) (5,5,-5)]
 
 main :: IO ()
 main = hspec $ do

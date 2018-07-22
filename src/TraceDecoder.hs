@@ -1,14 +1,18 @@
 {-# OPTIONS -Wall #-}
 {-# LANGUAGE BinaryLiterals #-}
 
-module TraceDecoder where
+module TraceDecoder
+  ( decodeCommand
+  , decodeTrace
+  , readTraceFile
+  ) where
 
 import Control.Applicative (pure, many)
 import Control.Monad
 import Data.Bits
-import qualified Data.ByteString as BS
+import qualified Data.ByteString.Lazy as BL
 import Data.Word (Word8)
-import Data.Serialize.Get (Get, getWord8, runGet)
+import Data.Serialize.Get (Get, getWord8, runGetLazy)
 
 import Coordinate (SLD, LLD, ND, FD)
 import State (Command (..), Trace)
@@ -87,9 +91,15 @@ trace :: Get Trace
 trace = many command
 
 
+decodeCommand :: BL.ByteString -> Either String Command
+decodeCommand = runGetLazy command
+
+decodeTrace :: BL.ByteString -> Either String Trace
+decodeTrace = runGetLazy trace
+
 readTraceFile :: FilePath -> IO Trace
 readTraceFile fname = do
-  s <- BS.readFile fname
-  case runGet trace s of
+  s <- BL.readFile fname
+  case runGetLazy trace s of
     Left err -> error err
     Right tr -> return tr
