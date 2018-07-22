@@ -70,7 +70,7 @@ formatFileStamp :: FormatTime t => t -> String
 formatFileStamp = formatTime defaultTimeLocale "%d-%H%M%S"
 
 queuedir :: FilePath
-queuedir = "/home/icfpc2018-queue"
+queuedir = "/home/icfpc2018/queue"
 
 submit :: Chan FilePath -> IO ()
 submit q = do
@@ -82,7 +82,7 @@ submit q = do
 
 
 postdir :: FilePath
-postdir = "/home/icfpc2018-post/"
+postdir = "/home/icfpc2018/post/"
 
 waitRequest :: (String -> IO ()) -> Chan FilePath -> IO ()
 waitRequest putLog_ q = do
