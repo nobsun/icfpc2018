@@ -5,12 +5,15 @@ module Sim
   , execOneStepCommands
   ) where
 
+import Control.Arrow ((&&&))
 import Control.Monad
 import Control.Monad.State
+import Data.Function (on)
 import qualified Data.IntMap as IntMap
 import qualified Data.IntSet as IntSet
 import Data.List
 import qualified Data.Map as Map
+import Data.Tuple.Extra (fst3,snd3,thd3)
 
 import Coordinate
 import Matrix as MX
@@ -65,13 +68,15 @@ execOneStepCommands' xs = do
         case Map.lookup c2 fusionSs of
           Just (bid2,c1') | c1==c1' -> return (bid1,bid2)
           _ -> error "failed to create a pair for fusion"
-  let g (c,(_,_,_)) (_,(_,_,c2)) = c == c2
-  let groupFills = groupBy g [(c, (bid, c1, c2))
-                             | (bid,GFill nd fd) <- xs
-                             , let (c,c1,c2) = (botPos (stBots s IntMap.! bid), c `add` nd, c1 `add` fd)]
-  let groupVoids = groupBy g [(c, (bid, c1, c2))
-                             | (bid,GVoid nd fd) <- xs
-                             , let (c,c1,c2) = (botPos (stBots s IntMap.! bid), c `add` nd, c1 `add` fd)]
+  let sameRegion = (==) `on` ((snd3.snd) &&& (thd3.snd))
+  let groupFills =
+        groupBy sameRegion [(c, (bid, c1, c2))
+                           | (bid,GFill nd fd) <- xs
+                           , let (c,c1,c2) = (botPos (stBots s IntMap.! bid), c `add` nd, c1 `add` fd)]
+  let groupVoids =
+        groupBy sameRegion [(c, (bid, c1, c2))
+                           | (bid,GVoid nd fd) <- xs
+                           , let (c,c1,c2) = (botPos (stBots s IntMap.! bid), c `add` nd, c1 `add` fd)]
   
   let mat = stMatrix s
   forM_ xs $ \(bid,cmd) -> do
