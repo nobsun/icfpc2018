@@ -13,6 +13,8 @@ import qualified Data.IntMap as IntMap
 import qualified Data.IntSet as IntSet
 import Data.List
 import qualified Data.Map as Map
+import Data.Set (Set)
+import qualified Data.Set as Set
 import Data.Tuple.Extra (fst3,snd3,thd3)
 
 import Coordinate
@@ -68,15 +70,15 @@ execOneStepCommands' xs = do
         case Map.lookup c2 fusionSs of
           Just (bid2,c1') | c1==c1' -> return (bid1,bid2)
           _ -> error "failed to create a pair for fusion"
-  let sameRegion = (==) `on` ((snd3.snd) &&& (thd3.snd))
+  let byRegion x@(r,_) = Map.insertWith Set.union r (Set.singleton x)
   let groupFills =
-        groupBy sameRegion [(c, (bid, c1, c2))
-                           | (bid,GFill nd fd) <- xs
-                           , let (c,c1,c2) = (botPos (stBots s IntMap.! bid), c `add` nd, c1 `add` fd)]
+        foldr byRegion Map.empty [ (region c1 c2,(bid,c,c1,c2))
+                                 | (bid,GFill nd fd) <- xs
+                                 , let (c,c1,c2) = (botPos (stBots s IntMap.! bid), c `add` nd, c1 `add` fd)]
   let groupVoids =
-        groupBy sameRegion [(c, (bid, c1, c2))
-                           | (bid,GVoid nd fd) <- xs
-                           , let (c,c1,c2) = (botPos (stBots s IntMap.! bid), c `add` nd, c1 `add` fd)]
+        foldr byRegion Map.empty [ (region c1 c2,(bid,c,c1,c2))
+                                 | (bid,GVoid nd fd) <- xs
+                                 , let (c,c1,c2) = (botPos (stBots s IntMap.! bid), c `add` nd, c1 `add` fd)]
   
   let mat = stMatrix s
   forM_ xs $ \(bid,cmd) -> do
@@ -199,10 +201,10 @@ execFusion bidP bidS = do
              , stEnergy = stEnergy s - 24
              }
 
-execGroupFill :: [(Coord, (BotId, Coord, Coord))] -> State SystemState ()
+execGroupFill :: Set (Region, (BotId, Coord, Coord, Coord)) -> State SystemState ()
 execGroupFill xs = return ()
 
-execGroupVoid :: [(Coord, (BotId, Coord, Coord))] -> State SystemState ()
+execGroupVoid :: Set (Region, (BotId, Coord, Coord, Coord)) -> State SystemState ()
 execGroupVoid xs = return ()
 
 checkEmptyRegion :: Matrix -> Region -> Bool
