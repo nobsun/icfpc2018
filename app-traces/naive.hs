@@ -61,40 +61,46 @@ stripSuffix_ suf x
 tgtSuf :: String
 tgtSuf = "_tgt.mdl"
 
+theProblemsDir :: FilePath
+theProblemsDir = "/home/icfpc2018-data/problems/F"
+
+theDefaultTraceDir :: FilePath
+theDefaultTraceDir = "/home/icfpc2018-data/default/F"
+
 run :: (String -> IO ())
     -> FilePath
     -> FilePath
-    -> FilePath
     -> IO ()
-run putLog src dst sf = do
+run putLog dst sf = do
   let df = stripSuffix_ tgtSuf sf <.> "nbt"
       label = sf ++ " --> " ++ df
   putLog $ "running: " ++ label
-  runNaive (src </> sf) (dst </> df)
+  runNaive (theProblemsDir </> sf) (dst </> df)
   putLog $ "done   : " ++ label
 
-runAll :: FilePath -> FilePath -> FilePath -> IO ()
-runAll src dst dtr = do
+runAll :: FilePath -> IO ()
+runAll dst = do
   do e <- doesDirectoryExist dst
      unless e . fail $ dst ++ " does not exist!"
   putStrLn "copyng default FD*.nbt FR*.nbt files ..."
+  let dtr = theDefaultTraceDir
   (ioExitCode =<<) . system $ unwords ["cp", "-a", dtr </> "FD*.nbt", dtr </> "FR*.nbt", dst ++ "/"]
   putStrLn "processing FA* files ..."
   let large f = any (`isPrefixOf` f)
                 [ "FA186" --- , "FA185", "FA184", "FA183", "FA182", "FA181", "FA180"
                 , "FA178", "FA175", "FA173"]
-  sfs0 <- filter (tgtSuf `isSuffixOf`) . filter ("FA" `isPrefixOf`) <$> getChilds src
+  sfs0 <- filter (tgtSuf `isSuffixOf`) . filter ("FA" `isPrefixOf`) <$> getChilds theProblemsDir
   let ls = filter large         sfs0
       ns = filter (not . large) sfs0
       sfs = ls ++ ns  -- enqueue larges first
   putLog <- newLog
   n <- getNumCapabilities
-  concurrent (n - 1) $ map (run putLog src dst) sfs
+  concurrent (n - 1) $ map (run putLog dst) sfs
 
 main :: IO ()
 main = do
   args <- getArgs
-  (src, dst, dtr) <- case args of
-    s:d:t:_ -> return (s, d, t)
-    _       -> fail "SOURCE_DIRECTORY, DEST_DIRECTORY and DEFAULT_TRACE_DIRECTORY are required."
-  runAll src dst dtr
+  dst <- case args of
+    d:_ -> return d
+    _   -> fail "DEST_DIRECTORY is required."
+  runAll dst
