@@ -60,6 +60,15 @@ executables:
     - filepath
     - directory
 
+  simulator:
+    main:                simulator.hs
+    source-dirs:         app-sim
+    dependencies:
+    - icfpc2018
+    - filepath
+    - mtl
+    - optparse-applicative
+
 tests:
   icfpc2018-test:
     main:                Spec.hs
