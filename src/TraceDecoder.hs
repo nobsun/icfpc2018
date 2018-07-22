@@ -34,7 +34,7 @@ nd w = pure (fromIntegral dx' - 1, fromIntegral dy' - 1, fromIntegral dz' - 1)
     (dy',dz') = tmp `divMod` 3
 
 fd :: (Word8, Word8, Word8) -> Get FD
-fd (dx,dy,dz) = pure (fromIntegral dx, fromIntegral dy, fromIntegral dz)
+fd (dx,dy,dz) = pure (fromIntegral dx - 30, fromIntegral dy -30, fromIntegral dz - 30)
 
 command :: Get Command
 command = do
@@ -72,6 +72,13 @@ command = do
       | w .&. 0b111 == 0b010 -> do
           nd' <- nd $ w `shiftR` 3
           return $ Void nd'
+      | w .&. 0b111 == 0b001 -> do
+          nd' <- nd $ w `shiftR` 3
+          dx <- getWord8
+          dy <- getWord8
+          dz <- getWord8
+          fd' <- fd $ (dx,dy,dz)
+          return $ GFill nd' fd'
 
 trace :: Get Trace
 trace = many command
