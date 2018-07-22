@@ -55,6 +55,7 @@ executables:
     - icfpc2018
     - filepath
     - directory
+    - process
 
   simulator:
     main:                simulator.hs
