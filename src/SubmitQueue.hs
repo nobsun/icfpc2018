@@ -65,7 +65,7 @@ submitLoop putLog_ submit_ =
                 formatLogStamp nextL ++ "." ]
             threadDelay $ fromEnum waitt `quot` 1000000
       maybe (return ()) delayRest maySubmitTs
-      putLog "now, run submit."
+      putLog "now, dequeue next submit."
       putLog . either (\e -> "submit failed: " ++ show e) (\() -> "submit done.")
         =<< tryIOError submit_
       loop . Just =<< getCurrentTime
