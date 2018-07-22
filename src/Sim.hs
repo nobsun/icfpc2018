@@ -67,7 +67,7 @@ execOneStepCommands' xs = do
         case Map.lookup c2 fusionSs of
           Just (bid2,c1') | c1==c1' -> return (bid1,bid2)
           _ -> error "failed to create a pair for fusion"
-  let update x@(r,bid) = Map.insertWith Set.union r (Set.singleton bid)
+  let update (r,bid) = Map.insertWith Set.union r (Set.singleton bid)
   let groupFills =
         foldr update Map.empty [ (region c1 c2,bid)
                                | (bid,GFill nd fd) <- xs
