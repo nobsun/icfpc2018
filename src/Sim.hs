@@ -73,12 +73,12 @@ execOneStepCommands' xs = do
       _ -> execSingleNanobotCommand mat bid cmd
   forM_ fusionPairs $ uncurry execFusion
 
-  s <- get
-  if stHarmonics s then -- harmonicsの状態は実行後の状態で良いのだろうか?
+  -- コスト計算は実行前の状態に基づく
+  if stHarmonics s then
     addCost $ 30 * stResolution s ^ (3 :: Int)
   else
     addCost $ 3 * stResolution s ^ (3 :: Int)
-  addCost $ 20 * n -- nanobotの個数は実行前の個数で良いのだろうか?
+  addCost $ 20 * n
 
 
 -- 事前条件のチェックは他のボットのコマンドの実行前のmatrixに対して行う必要があるので、

@@ -261,6 +261,13 @@ simSpec = do
           s1 = execOneStepCommands [(1,Fission (0,1,0) 10)] s0
       stEnergy s1 `shouldBe` 24044 -- 24044 = 24 + 3*20*20*20 + 20*1
 
+  describe "active nanobot cost" $ do
+    it "computes resonant subspace field cost based on the pre-state" $ do
+      let s0 = initialState (Model 20 (makeMatrix [])) []
+          s1 = execOneStepCommands [(1,Flip)] s0
+      stEnergy s1 `shouldBe` 24020 -- 24020 = 3*20*20*20 + 20*1
+
+
 main :: IO ()
 main = hspec $ do
   coordinateSpec
