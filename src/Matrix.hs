@@ -30,14 +30,12 @@ isGrounded m =
 
     f (g,u) = (g `Set.union` s1, u Set.\\ s1)
       where
-        s0 = Set.fromList
-             [ Coord c
+        s1 = Set.unions
+             [ Set.intersection u $ Set.fromList $ map Coord [(x-1,y,z),(x+1,y,z),(x,y-1,z),(x,y+1,z),(x,y,z-1),(x,y,z+1)]
              | Coord (x,y,z) <- Set.toList g
-             , c <- [(x-1,y,z),(x+1,y,z),(x,y-1,z),(x,y+1,z),(x,y,z-1),(x,y,z+1)]
-             -- Coord の要素に対して範囲 [0, R - 1] を見ていなくて危険に見えるが、
-             -- 以下の intersection で、問題のない Coord のみが取り出されるので問題なし
              ]
-        s1 = Set.intersection s0 u
+             -- Coord の要素に対して範囲 [0, R - 1] を見ていなくて危険に見えるが、
+             -- intersection で、問題のない Coord のみが取り出されるので問題なし
 
     -- grounded 集合と ungrounded 集合のペアが変化しなくなるまで繰り返し
     converge x0 = go (f x0, x0)
