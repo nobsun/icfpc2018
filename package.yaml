@@ -30,7 +30,7 @@ dependencies:
 
 library:
   source-dirs: src
-  ghc-prof-options: -auto-all
+#  ghc-prof-options: -auto-all
 
 # ghc-options:
 # - -Wall
@@ -64,7 +64,7 @@ executables:
     - filepath
     - mtl
     - optparse-applicative
-    ghc-prof-options: -auto-all
+#    ghc-prof-options: -auto-all
 
 tests:
   icfpc2018-test:
