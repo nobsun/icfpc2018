@@ -72,6 +72,12 @@ nd d = 0 < ml && ml <= 2 && cl == 1
     ml = mlen d
     cl = clen d
 
+-- predicate to check difference is `far coordinate difference` (noteted fd)
+fd :: CDiff -> Bool
+fd d = 0 < cl && cl <= 30
+  where
+    cl = clen d
+
 -- | may not normalized region type
 type Region_ = (Coord, Coord)
 
