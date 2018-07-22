@@ -89,12 +89,12 @@ encode (Void nd) =
     d = encodeND nd
 
 encode (GFill nd fd) =
-  [0 .|. (shiftL d 1) .|. 3] ++ encodeFD fd
+  [0 .|. (shiftL d 1) .|. 3] <> encodeFD fd
   where
     d = encodeND nd
 
 encode (GVoid nd fd) =
-  [0 .|. (shiftL d 0) .|. 3] ++ encodeFD fd
+  [0 .|. (shiftL d 0) .|. 3] <> encodeFD fd
   where
     d = encodeND nd
 
