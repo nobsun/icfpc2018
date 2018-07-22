@@ -182,10 +182,10 @@ execFusion bidP bidS = do
              , stEnergy = stEnergy s - 24
              }
 
-execGroupFill :: [BotId] -> StateSystemState ()
+execGroupFill :: [BotId] -> State SystemState ()
 execGroupFill = undefined
 
-execGroupVoid :: [BotId] -> StateSystemState ()
+execGroupVoid :: [BotId] -> State SystemState ()
 execGroupVoid = undefined
 
 checkEmptyRegion :: Matrix -> Region -> Bool
