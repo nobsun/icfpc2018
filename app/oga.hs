@@ -1,9 +1,7 @@
-module Main where
-
 import System.Environment
 
 import TraceEncoder
-import OgaBot
+import NaiveBot
 import Model
 
 main :: IO ()
@@ -14,7 +12,7 @@ main = do
     f :: String -> IO ()
     f mdl = do
       model <- readModel mdl
-      let trs = getOgaBotTrace model
+      let trs = getAssembleTrace model
 --      mapM_ print trs -- for debug
       writeTraceFile (mkNbtName mdl) trs
 

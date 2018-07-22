@@ -37,8 +37,8 @@ library:
 
 executables:
   oga-exe:
-    main:                Main.hs
-    source-dirs:         oga
+    main:                oga.hs
+    source-dirs:         app
     ghc-options:
     - -threaded
     - -rtsopts
@@ -58,13 +58,23 @@ executables:
 
   simulator:
     main:                simulator.hs
-    source-dirs:         app-sim
+    source-dirs:         app
     dependencies:
     - icfpc2018
     - filepath
     - mtl
     - optparse-applicative
 #    ghc-prof-options: -auto-all
+
+  trace-decode:
+    main:                trace-decode.hs
+    source-dirs:         app
+    dependencies:
+    - icfpc2018
+    - filepath
+    - mtl
+    - optparse-applicative
+
 
 tests:
   icfpc2018-test:
