@@ -46,8 +46,8 @@ executables:
     dependencies:
     - icfpc2018
 
-  oga-traces:
-    main:                oga-traces.hs
+  naive-traces:
+    main:                naive.hs
     source-dirs:         app-traces
     ghc-options:
     - -Wall
