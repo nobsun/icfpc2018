@@ -10,8 +10,8 @@ import Control.Concurrent.Chan (Chan, newChan, readChan, writeChan)
 import System.IO.Error (tryIOError)
 import Data.List (isSuffixOf)
 import Data.Time
-  (NominalDiffTime, diffUTCTime, getCurrentTime,
-   FormatTime, formatTime)
+  (NominalDiffTime, diffUTCTime, addUTCTime, getCurrentTime,
+   getZonedTime, utcToLocalZonedTime, FormatTime, formatTime)
 import Data.Time.Locale.Compat (defaultTimeLocale)
 import System.IO (stdout, BufferMode (LineBuffering), hSetBuffering, hGetContents)
 import System.FilePath ((</>), (<.>))
@@ -28,7 +28,7 @@ submitGateway = do
   putLog <- do
     put <- newLog
     return $ \s -> do
-      ts <- formatLogStamp <$> getCurrentTime
+      ts <- formatLogStamp <$> getZonedTime
       put $ ts ++ ": " ++ s
   queue  <- newChan
   void . forkIO . submitLoop putLog $ submit queue
@@ -55,10 +55,14 @@ submitLoop putLog_ submit_ =
       let delayRest prev = do
             current <- getCurrentTime
             let waitt = interval - diffUTCTime current prev
+            prevL <- utcToLocalZonedTime prev
+            nextL <- utcToLocalZonedTime $ addUTCTime waitt current
             putLog $ unwords
-              [ "previouns post at ",
-                formatLogStamp prev ++ ".",
-                "so, wait", show waitt ++ "." ]
+              [ "previouns post at",
+                formatLogStamp prevL ++ ".",
+                "so, wait", show waitt ++ ".",
+                "will proceed at",
+                formatLogStamp nextL ++ "." ]
             threadDelay $ fromEnum waitt `quot` 1000000
       maybe (return ()) delayRest maySubmitTs
       putLog "now, run submit."
@@ -75,7 +79,7 @@ queuedir = "/home/icfpc2018/queue"
 submit :: Chan FilePath -> IO ()
 submit q = do
   fn <- readChan q
-  ts <- formatFileStamp <$> getCurrentTime
+  ts <- formatFileStamp <$> getZonedTime
   let dfn = ts ++ "_" ++ fn
   renameFile (queuedir </> fn) (submitExport </> dfn)
   ioExitCode =<< rawSystem "./lib/apply-submit.sh" [dfn]
@@ -89,7 +93,7 @@ waitRequest putLog_ q = do
   let putLog = putLog_ . ("request: " ++)
       process req = case req of
         [_d, _ev, fn] | ".zip" `isSuffixOf` fn -> do
-          ts <- formatFileStamp <$> getCurrentTime
+          ts <- formatFileStamp <$> getZonedTime
           let qfn = ts <.> "zip"
           putLog $ "enqueue: " ++ fn ++ " --> " ++ qfn
           renameFile (postdir </> fn) (queuedir </> qfn)
