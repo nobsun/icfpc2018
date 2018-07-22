@@ -232,6 +232,10 @@ traceDecoderSpec = do
     it "GFill <0,-1,0> <10,-15,20> is encoded as [01010001] [00101000] [00001111] [00110010]." $
       runGet trace (BS.pack [0b01010001, 0b00101000, 0b00001111, 0b00110010]) `shouldBe` Right [GFill (0,-1,0) (10,-15,20)]
 
+  describe "GVoid" $ do
+    it "GVoid <1,0,0> <5,5,-5> is encoded as [10110000] [00100011] [00100011] [00011001]." $
+      runGet trace (BS.pack [0b10110000, 0b00100011, 0b00100011, 0b00011001]) `shouldBe` Right [GVoid (1,0,0) (5,5,-5)]
+
 main :: IO ()
 main = hspec $ do
   coordinateSpec

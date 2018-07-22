@@ -74,11 +74,14 @@ command = do
           return $ Void nd'
       | w .&. 0b111 == 0b001 -> do
           nd' <- nd $ w `shiftR` 3
-          dx <- getWord8
-          dy <- getWord8
-          dz <- getWord8
-          fd' <- fd $ (dx,dy,dz)
+          (dx,dy,dz) <- liftM3 (,,) getWord8 getWord8 getWord8
+          fd' <- fd (dx,dy,dz)
           return $ GFill nd' fd'
+      | w .&. 0b111 == 0b000 -> do
+          nd' <- nd $ w `shiftR` 3
+          (dx,dy,dz) <- liftM3 (,,) getWord8 getWord8 getWord8
+          fd' <- fd (dx,dy,dz)
+          return $ GVoid nd' fd'
 
 trace :: Get Trace
 trace = many command
