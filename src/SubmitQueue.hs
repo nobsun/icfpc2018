@@ -13,7 +13,7 @@ import Data.Time
   (NominalDiffTime, diffUTCTime, getCurrentTime,
    FormatTime, formatTime)
 import Data.Time.Locale.Compat (defaultTimeLocale)
-import System.IO (stdout, BufferMode (LineBuffering), hSetBuffering, hGetContents, hClose)
+import System.IO (stdout, BufferMode (LineBuffering), hSetBuffering, hGetContents)
 import System.FilePath ((</>), (<.>))
 import System.Directory (renameFile)
 import System.Process (rawSystem, runInteractiveProcess)
