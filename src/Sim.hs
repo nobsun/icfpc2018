@@ -9,6 +9,7 @@ import Control.Monad
 import Control.Monad.State
 import qualified Data.IntMap as IntMap
 import qualified Data.IntSet as IntSet
+import Data.List
 import qualified Data.Map as Map
 
 import Coordinate
@@ -64,9 +65,13 @@ execOneStepCommands' xs = do
         case Map.lookup c2 fusionSs of
           Just (bid2,c1') | c1==c1' -> return (bid1,bid2)
           _ -> error "failed to create a pair for fusion"
-
-  let groupFills = [] :: [[BotId]]
-  let groupVoids = [] :: [[BotId]]
+  let g (c,(_,_,_)) (_,(_,_,c2)) = c == c2
+  let groupFills = groupBy g [(c, (bid, c1, c2))
+                             | (bid,GFill nd fd) <- xs
+                             , let (c,c1,c2) = (botPos (stBots s IntMap.! bid), c `add` nd, c1 `add` fd)]
+  let groupVoids = groupBy g [(c, (bid, c1, c2))
+                             | (bid,GVoid nd fd) <- xs
+                             , let (c,c1,c2) = (botPos (stBots s IntMap.! bid), c `add` nd, c1 `add` fd)]
   
   let mat = stMatrix s
   forM_ xs $ \(bid,cmd) -> do
@@ -189,11 +194,11 @@ execFusion bidP bidS = do
              , stEnergy = stEnergy s - 24
              }
 
-execGroupFill :: [BotId] -> State SystemState ()
-execGroupFill = undefined
+execGroupFill :: [(Coord, (BotId, Coord, Coord))] -> State SystemState ()
+execGroupFill xs = return ()
 
-execGroupVoid :: [BotId] -> State SystemState ()
-execGroupVoid = undefined
+execGroupVoid :: [(Coord, (BotId, Coord, Coord))] -> State SystemState ()
+execGroupVoid xs = return ()
 
 checkEmptyRegion :: Matrix -> Region -> Bool
 checkEmptyRegion mat r = all (isEmpty mat) (membersOfRegion r)
