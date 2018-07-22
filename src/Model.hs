@@ -9,7 +9,10 @@ import qualified Data.ByteString.Lazy as BL
 import Coordinate
 import Matrix
 
-data Model = Model !Int Matrix
+data Model = Model
+  { mdResolution :: !Int
+  , mdMatrix     :: Matrix
+  }
   deriving (Eq,Ord,Show)
 
 parseModel :: BL.ByteString -> Model

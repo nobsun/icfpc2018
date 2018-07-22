@@ -1,10 +1,12 @@
 {-# OPTIONS_GHC -Wall #-}
 module State where
 
+import Data.Maybe (mapMaybe);
 import Data.IntMap.Strict (IntMap)
 import qualified Data.IntMap.Strict as IntMap
 import Data.IntSet (IntSet)
 import qualified Data.IntSet as IntSet
+import qualified Data.Map.Strict as Map
 
 import Coordinate
 import Matrix as MX
@@ -18,20 +20,42 @@ data SystemState
   , stHarmonics :: !Bool
   , stResolution :: !Int -- TODO: Matrix自体に持たせる
   , stMatrix :: Matrix
+  , stTgtMatrix :: Maybe Matrix   -- Target
+  , stSrcMatrix :: Maybe Matrix   -- Source
   , stBots :: !(IntMap Bot) -- BotId to Bot mapping
   , stTrace :: Trace
   } deriving (Eq, Ord, Show)
 
-stateIsWellformed :: SystemState -> Bool
-stateIsWellformed _ = True -- todo
 
-initialState :: Model -> Trace -> SystemState
-initialState (Model res _mat) trace =
+stateIsWellformed :: SystemState -> Bool
+stateIsWellformed s = and
+  [ -- If the harmonics is Low, then all Full voxels of the matrix are grounded.
+    stHarmonics s || isGrounded (stMatrix s)
+  , -- Each active nanobot has a different identifier.
+    and [botId bot == bid | (bid,bot) <- IntMap.toList (stBots s)]
+  , -- The position of each active nanobot is distinct and is Void in the matrix.
+    all (<=1) $ Map.fromListWith (+) [(botPos bot, 1::Int) | bot <- IntMap.elems (stBots s)]
+  , and [isEmpty (stMatrix s) (botPos bot) | bot <- IntMap.elems (stBots s)]
+  , -- The seeds of each active nanobot are disjoint.
+    all (<=1) $ IntMap.unionsWith (+) [IntMap.fromAscList [(seed, 1::Int) | seed <- IntSet.toAscList (botSeeds bot)] | bot <- IntMap.elems (stBots s)]
+  , -- The seeds of each active nanobot does not include the identifier of any active nanobot.
+    IntSet.null $
+      IntSet.unions [botSeeds bot | bot <- IntMap.elems (stBots s)]
+      `IntSet.intersection`
+      IntMap.keysSet (stBots s)
+  ]
+
+
+initialState :: Maybe Model -> Maybe Model -> Trace -> SystemState
+initialState Nothing   Nothing   _     = error "no model given!"
+initialState mTgtModel mSrcModel trace =
   SystemState
   { stEnergy = 0
   , stHarmonics = False
-  , stResolution = res
+  , stResolution = head (mapMaybe (fmap mdResolution) [mTgtModel, mSrcModel])
   , stMatrix = makeMatrix []
+  , stTgtMatrix = fmap mdMatrix mTgtModel
+  , stSrcMatrix = fmap mdMatrix mSrcModel
   , stBots = IntMap.singleton 1 $
       Bot
       { botId = 1
