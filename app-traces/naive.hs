@@ -1,6 +1,6 @@
 import Control.Applicative ((*>))
 import Control.Monad (forever, unless, void)
-import Control.Concurrent (forkIO)
+import Control.Concurrent (forkIO, getNumCapabilities)
 import Control.Concurrent.Chan (newChan, readChan, writeChan)
 import Data.List (isPrefixOf, isSuffixOf)
 import System.Environment (getArgs)
@@ -80,9 +80,16 @@ runAll src dst dtr = do
   putStrLn "copyng default FD*.nbt FR*.nbt files ..."
   (ioExitCode =<<) . system $ unwords ["cp", "-a", dtr </> "FD*.nbt", dtr </> "FR*.nbt", dst ++ "/"]
   putStrLn "processing FA* files ..."
-  sfs <- filter (tgtSuf `isSuffixOf`) . filter ("FA" `isPrefixOf`) <$> getChilds src
+  let large f = any (`isPrefixOf` f)
+                [ "FA186" --- , "FA185", "FA184", "FA183", "FA182", "FA181", "FA180"
+                , "FA178", "FA175", "FA173"]
+  sfs0 <- filter (tgtSuf `isSuffixOf`) . filter ("FA" `isPrefixOf`) <$> getChilds src
+  let ls = filter large         sfs0
+      ns = filter (not . large) sfs0
+      sfs = ls ++ ns  -- enqueue larges first
   putLog <- newLog
-  concurrent 10 $ map (run putLog src dst) sfs
+  n <- getNumCapabilities
+  concurrent (n - 1) $ map (run putLog src dst) sfs
 
 main :: IO ()
 main = do
