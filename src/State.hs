@@ -123,3 +123,9 @@ data Command
   deriving (Eq, Ord, Show)
 
 type Trace = [Command]
+
+noActiveNanobots :: SystemState -> Bool
+noActiveNanobots = IntMap.null . stBots
+
+noCommands :: SystemState -> Bool
+noCommands = null . stTrace

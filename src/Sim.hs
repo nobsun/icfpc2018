@@ -25,7 +25,7 @@ execAll = execState execAll'
 execAll' :: State SystemState ()
 execAll' = do
   s <- get
-  if IntMap.null (stBots s) || null (stTrace s) then
+  if noActiveNanobots s || noCommands s then
     return ()
   else do
     execOneStep'
