@@ -11,7 +11,7 @@ main :: IO ()
 main = do
   (flag:args) <- getArgs
   case flag of
-    "FR" -> mapM_ solve2 (zip (sort args) (tail (sort args)))
+    "FR" -> mapM_ solve2 (split 2 (sort args))
     _    -> mapM_ solve1 args
 
 solve1 :: String -> IO ()
@@ -28,11 +28,12 @@ solve1 mdl = do
         "FD" -> getDisassembleTrace'
         _    -> const [[Halt]]
 
-solve2 :: (String, String) -> IO ()
-solve2 (src,tgt) = do
+solve2 :: [String] -> IO ()
+solve2 [src,tgt] = do
   srcModel <- readModel src
   tgtModel <- readModel tgt
   let trs = getReassembleTrace' srcModel tgtModel
+  putStrLn ("src=" ++ src ++ " tgt=" ++ tgt)
 --  putStrLn ("resolution: " ++ show (mdResolution srcModel))
 --  mapM_ print trs
   writeTraceFile (mkNbtName src) (concat trs)
@@ -43,3 +44,9 @@ mkNbtName str =
   where
     name = takeWhile (/='_') str
 
+split :: Int -> [a] -> [[a]]
+split n [] = []
+split n xs =
+  as : split n bs
+  where
+    (as,bs) = splitAt n xs
