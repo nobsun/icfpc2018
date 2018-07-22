@@ -6,7 +6,7 @@ import System.Directory (getDirectoryContents, doesDirectoryExist)
 
 
 import TraceEncoder (writeTraceFile)
-import OgaBot (getOgaBotTrace)
+import NaiveBot (getAssembleTrace)
 import Model (readModel)
 
 
@@ -16,7 +16,7 @@ getChilds = (filter (`notElem` [".", ".."]) <$>) . getDirectoryContents
 run :: FilePath -> FilePath -> IO ()
 run mdl nbt = do
   model <- readModel mdl
-  let trs = getOgaBotTrace model
+  let trs = getAssembleTrace model
   writeTraceFile nbt trs
 
 stripSuffix_ :: String -> String -> String

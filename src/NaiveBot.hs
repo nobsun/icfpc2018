@@ -1,6 +1,6 @@
 {-# OPTIONS_GHC -Wno-missing-fields #-}
 
-module OgaBot where
+module NaiveBot where
 
 import Control.Monad (replicateM)
 import qualified Control.Monad.State.Lazy as St
@@ -84,12 +84,12 @@ cHalt = do
 
 -------------------------------------------------------
 
-getOgaBotTrace :: Model -> Trace
-getOgaBotTrace m =
-  reverse $ snd $ St.execState (ogaBot m) (Bot{botPos=Coord(0,0,0),botId=1,botSeeds=IntSet.empty}, [])
+getAssembleTrace :: Model -> Trace
+getAssembleTrace m =
+  reverse $ snd $ St.execState (naiveBot m) (Bot{botPos=Coord(0,0,0),botId=1,botSeeds=IntSet.empty}, [])
 
-ogaBot :: Model -> OgaBotSt ()
-ogaBot (Model r mtx) = do
+naiveBot :: Model -> OgaBotSt ()
+naiveBot (Model r mtx) = do
   cFlip
   sequence_
     [ fillFloor i (maybe [] Set.toList mset)
