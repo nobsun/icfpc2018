@@ -45,8 +45,27 @@ stateIsWellformed s = and
   ]
 
 
-initialState :: Model -> Model -> Trace -> SystemState
-initialState tgtModel srcModel trace =
+-- for lightning division
+initialStateForAssemblyL :: Model -> Trace -> SystemState
+initialStateForAssemblyL tgtModel trace =
+  SystemState
+  { stEnergy = 0
+  , stHarmonics = False
+  , stResolution = mdResolution tgtModel
+  , stMatrix = MX.makeMatrix []
+  , stTgtMatrix = mdMatrix tgtModel
+  , stSrcMatrix = MX.makeMatrix []
+  , stBots = IntMap.singleton 1 $
+      Bot
+      { botId = 1
+      , botPos = Coord (0,0,0)
+      , botSeeds = IntSet.fromList [2..20]
+      }
+  , stTrace = trace
+  }
+
+initialStateForReassembly :: Model -> Model -> Trace -> SystemState
+initialStateForReassembly srcModel tgtModel trace =
   SystemState
   { stEnergy = 0
   , stHarmonics = False
@@ -65,7 +84,11 @@ initialState tgtModel srcModel trace =
 
 initialStateForAssembly :: Model -> Trace -> SystemState
 initialStateForAssembly tgtModel@(Model res _mat) trace =
-  initialState tgtModel (Model res (MX.makeMatrix [])) trace
+  initialStateForReassembly (Model res (MX.makeMatrix [])) tgtModel trace
+
+initialStateForDisassembly :: Model -> Trace -> SystemState
+initialStateForDisassembly srcModel@(Model res _mat) trace =
+  initialStateForReassembly srcModel (Model res (MX.makeMatrix [])) trace
 
 
 type BotId = Int
