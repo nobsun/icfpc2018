@@ -37,8 +37,8 @@ library:
 
 executables:
   oga-exe:
-    main:                Main.hs
-    source-dirs:         oga
+    main:                oga.hs
+    source-dirs:         app
     ghc-options:
     - -threaded
     - -rtsopts
