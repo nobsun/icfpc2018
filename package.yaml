@@ -39,9 +39,9 @@ executables:
     main:                oga.hs
     source-dirs:         app
     ghc-options:
-    - -threaded
+    # - -threaded
     - -rtsopts
-    - -with-rtsopts=-N
+    # - -with-rtsopts=-N
     dependencies:
     - icfpc2018
 
