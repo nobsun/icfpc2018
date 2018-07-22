@@ -4,15 +4,17 @@ import Control.Concurrent (forkIO, getNumCapabilities)
 import Control.Concurrent.Chan (newChan, readChan, writeChan)
 import Data.List (isPrefixOf, isSuffixOf)
 import System.Environment (getArgs)
+import System.IO (stdout, BufferMode (LineBuffering), hSetBuffering)
 import System.FilePath ((</>), (<.>))
 import System.Directory (getDirectoryContents, doesDirectoryExist)
 import System.Process (system)
 import System.Exit (ExitCode (..))
 
-
 import TraceEncoder (writeTraceFile)
-import NaiveBot (getAssembleTrace)
-import Model (readModel)
+import Matrix (makeMatrix)
+import Model (Model (mdMatrix), readModel)
+import NaiveBot (getAssembleTrace, getDisassembleTrace)
+import TraceOptimizer (optimize)
 
 
 runExitCode :: a -> (Int -> a) -> ExitCode -> a
@@ -28,6 +30,7 @@ getChilds = (filter (`notElem` [".", ".."]) <$>) . getDirectoryContents
 
 newLog :: IO (String -> IO ())
 newLog = do
+  hSetBuffering stdout LineBuffering
   c <- newChan
   void . forkIO . forever $ putStrLn =<< readChan c
   return $ writeChan c
@@ -47,10 +50,24 @@ concurrent n as = do
   mapM_ (writeChan tq) $ map Just as ++ replicate n Nothing  -- enqueue tasks and end-marks
   sequence_ . replicate n $ readChan wq                      -- waiting finish
 
-runNaive :: FilePath -> FilePath -> IO ()
-runNaive mdl nbt = do
+runAssemble :: FilePath -> FilePath -> IO ()
+runAssemble mdl nbt = do
   model <- readModel mdl
-  let trs = getAssembleTrace model
+  let trs0 = getAssembleTrace model
+      trs  =  optimize (model { mdMatrix = makeMatrix [] }) model trs0
+      -- trs
+      --   | n < 115    =  optimize (model { mdMatrix = makeMatrix [] }) model trs0
+      --   | otherwise  =  trs0
+  writeTraceFile nbt trs
+
+runDisassemble :: FilePath -> FilePath -> IO ()
+runDisassemble mdl nbt = do
+  model <- readModel mdl
+  let trs0 = getDisassembleTrace model
+      trs  =  optimize model (model { mdMatrix = makeMatrix [] }) trs0
+      -- trs
+      --   | n < 115    =  optimize model (model { mdMatrix = makeMatrix [] }) trs0
+      --   | otherwise  =  trs0
   writeTraceFile nbt trs
 
 stripSuffix_ :: String -> String -> String
@@ -60,6 +77,9 @@ stripSuffix_ suf x
 
 tgtSuf :: String
 tgtSuf = "_tgt.mdl"
+
+srcSuf :: String
+srcSuf = "_src.mdl"
 
 problemsDir :: FilePath
 problemsDir = "/home/icfpc2018-data/problems/F"
@@ -72,27 +92,25 @@ run :: (String -> IO ())
     -> FilePath
     -> IO ()
 run putLog dst sf = do
-  let df = stripSuffix_ tgtSuf sf <.> "nbt"
+  (suf, action) <- case take 2 sf of
+    "FA"  ->  return (tgtSuf, runAssemble)
+    "FD"  ->  return (srcSuf, runDisassemble)
+    x     ->  fail $ "unknown type: " ++ x
+  let df = stripSuffix_ suf sf <.> "nbt"
       label = sf ++ " --> " ++ df
   putLog $ "running: " ++ label
-  runNaive (problemsDir </> sf) (dst </> df)
+  action (problemsDir </> sf) (dst </> df)
   putLog $ "done   : " ++ label
 
 runAll :: FilePath -> IO ()
 runAll dst = do
   do e <- doesDirectoryExist dst
      unless e . fail $ dst ++ " does not exist!"
-  putStrLn "copyng default FD*.nbt FR*.nbt files ..."
+  putStrLn "copyng default FR*.nbt files ..."
   let dtr = defaultTraceDir
-  (ioExitCode =<<) . system $ unwords ["cp", "-a", dtr </> "FD*.nbt", dtr </> "FR*.nbt", dst ++ "/"]
-  putStrLn "processing FA* files ..."
-  let large f = any (`isPrefixOf` f)
-                [ "FA186" --- , "FA185", "FA184", "FA183", "FA182", "FA181", "FA180"
-                , "FA178", "FA175", "FA173"]
-  sfs0 <- filter (tgtSuf `isSuffixOf`) . filter ("FA" `isPrefixOf`) <$> getChilds problemsDir
-  let ls = filter large         sfs0
-      ns = filter (not . large) sfs0
-      sfs = ls ++ ns  -- enqueue larges first
+  (ioExitCode =<<) . system $ unwords ["cp", "-a", dtr </> "FR*.nbt", dst ++ "/"]
+  putStrLn "processing FA* files and FD* files ..."
+  sfs <- filter ((||) <$> ("FA" `isPrefixOf`) <*> ("FD" `isSuffixOf`)) <$> getChilds problemsDir
   putLog <- newLog
   n <- getNumCapabilities
   concurrent (n - 1) $ map (run putLog dst) sfs
