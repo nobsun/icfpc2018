@@ -85,13 +85,13 @@ encode (Void nd) =
     d = encodeND nd
 
 encode (GFill nd fd) =
-  [0 .|. (shiftL d 1) .|. 3] <> [dx,dy,dz]
+  [0 .|. (shiftL d 3) .|. 1] <> [dx,dy,dz]
   where
     d = encodeND nd
     (dx,dy,dz) = encodeFD fd
 
 encode (GVoid nd fd) =
-  [0 .|. (shiftL d 0) .|. 3] <> [dx,dy,dz]
+  [0 .|. (shiftL d 3) .|. 0] <> [dx,dy,dz]
   where
     d = encodeND nd
     (dx,dy,dz) = encodeFD fd
