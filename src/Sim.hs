@@ -22,7 +22,7 @@ execAll = execState execAll'
 execAll' :: State SystemState ()
 execAll' = do
   s <- get
-  if IntMap.null (stBots s) then
+  if IntMap.null (stBots s) || null (stTrace s) then
     return ()
   else do
     execOneStep'
