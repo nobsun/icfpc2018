@@ -2,7 +2,7 @@
 module Sim where
 
 import Control.Monad
-import qualified Control.Monad.State as SM
+import Control.Monad.State
 import qualified Data.IntMap as IntMap
 import qualified Data.IntSet as IntSet
 import qualified Data.Map as Map
@@ -11,38 +11,38 @@ import Coordinate
 import Matrix as MX
 import State
 
-execSteps :: SM.State State ()
+execSteps :: State SystemState ()
 execSteps = do
-  s <- SM.get
+  s <- get
   if IntMap.null (stBots s) then
     return ()
   else do
     execOneStep
     execSteps
 
-execOneStep :: SM.State State ()
+execOneStep :: State SystemState ()
 execOneStep = do
-  s <- SM.get
+  s <- get
   unless (stateIsWellformed s) $ error "state is not wellformed"
   let n = IntMap.size (stBots s)
   case splitAt n (stTrace s) of
     (xs, traces') -> do
       unless (length xs == n) $ error "trace is short"
       execBots $ zip (map fst (IntMap.toAscList (stBots s))) xs
-      s <- SM.get
+      s <- get
       if stHarmonics s then
         addCost $ 30 * stResolution s ^ (3 :: Int)
       else
         addCost $ 3 * stResolution s ^ (3 :: Int)
       addCost $ 20 * n -- nanobotの個数は実行前の個数で良いのだろうか?
-      SM.modify (\s -> s{ stTrace = traces' })
+      modify (\s -> s{ stTrace = traces' })
 
-addCost :: Int -> SM.State State ()
-addCost cost = SM.modify (\s -> s{ stEnergy = stEnergy s + fromIntegral cost })
+addCost :: Int -> State SystemState ()
+addCost cost = modify (\s -> s{ stEnergy = stEnergy s + fromIntegral cost })
 
-execBots :: [(BotId, Command)] -> SM.State State ()
+execBots :: [(BotId, Command)] -> State SystemState ()
 execBots xs = do
-  s <- SM.get
+  s <- get
 
   let fusionPs = Map.fromList [(c, (bid, c `add` nd)) | (bid,FusionP nd) <- xs, let c = botPos (stBots s IntMap.! bid)]
       fusionSs = Map.fromList [(c, (bid, c `add` nd)) | (bid,FusionS nd) <- xs, let c = botPos (stBots s IntMap.! bid)]
@@ -64,33 +64,33 @@ execBots xs = do
 
 -- 事前条件のチェックは他のボットのコマンドの実行前のmatrixに対して行う必要があるので、
 -- そのMatrixを受け取っている。
-execSingleNanobotCommand :: Matrix -> BotId -> Command -> SM.State State ()
+execSingleNanobotCommand :: Matrix -> BotId -> Command -> State SystemState ()
 execSingleNanobotCommand _mat _bid (FusionP _) = error "execSingleNanobotCommand: FusionP should not be passed"
 execSingleNanobotCommand _mat _bid (FusionS _) = error "execSingleNanobotCommand: FusionS should not be passed"
 execSingleNanobotCommand _mat _bid Halt = do
-  s <- SM.get
+  s <- get
   case IntMap.elems (stBots s) of
     [bot] -> do
       unless (botPos bot == Coord (0,0,0)) $ error "Halt pre-condition is violated"
-      SM.put $ s{ stBots = IntMap.empty }
+      put $ s{ stBots = IntMap.empty }
     _ -> error "Halt pre-condition is violated"
 execSingleNanobotCommand _mat _bid Wait = return ()
 execSingleNanobotCommand _mat _bid Flip = do
-  s <- SM.get
-  SM.put $ s{ stHarmonics = not (stHarmonics s) }
+  s <- get
+  put $ s{ stHarmonics = not (stHarmonics s) }
 execSingleNanobotCommand mat bid (SMove lld) = do
-  s <- SM.get
+  s <- get
   case IntMap.lookup bid (stBots s) of
     Just bot -> do
       let c  = botPos bot
           c' = add c lld
       unless (checkEmptyRegion mat (region c c')) $ error "SMove pre-condition is violated"
-      SM.put $
+      put $
         s{ stBots   = IntMap.insert bid bot{ botPos = c' } (stBots s)
          , stEnergy = stEnergy s + fromIntegral (2 * mlen lld)
          }
 execSingleNanobotCommand mat bid (LMove sld1 sld2) = do
-  s <- SM.get
+  s <- get
   case IntMap.lookup bid (stBots s) of
     Just bot -> do
       let c   = botPos bot
@@ -98,12 +98,12 @@ execSingleNanobotCommand mat bid (LMove sld1 sld2) = do
           c'' = add c' sld2
       unless (checkEmptyRegion mat (region c  c' )) $ error "LMove pre-condition is violated"
       unless (checkEmptyRegion mat (region c' c'')) $ error "LMove pre-condition is violated"
-      SM.put $
+      put $
         s{ stBots   = IntMap.insert bid bot{ botPos = c'' } (stBots s)
          , stEnergy = stEnergy s + fromIntegral (2 * mlen sld1 + 2 + mlen sld2)
          }
 execSingleNanobotCommand mat bid (Fission nd m) = do
-  s <- SM.get
+  s <- get
   case IntMap.lookup bid (stBots s) of
     Just bot -> do
       when (IntSet.null (botSeeds bot)) $ error "Fission pre-condition is violated"
@@ -112,7 +112,7 @@ execSingleNanobotCommand mat bid (Fission nd m) = do
       unless (isEmpty mat c') $ error "Fission pre-condition is violated"
       case splitAt (m+1) (IntSet.toAscList (botSeeds bot)) of
         (bid':seeds1, seeds2) -> do
-          SM.put $
+          put $
             s{ stBots =
                  IntMap.insert bid  bot{ botSeeds = IntSet.fromAscList seeds2 } $
                  IntMap.insert bid' Bot{ botId = bid', botPos = c', botSeeds = IntSet.fromAscList seeds1 } $
@@ -120,7 +120,7 @@ execSingleNanobotCommand mat bid (Fission nd m) = do
              , stEnergy = stEnergy s + 24
              }
 execSingleNanobotCommand _mat bid (Fill nd) = do
-  s <- SM.get
+  s <- get
   case IntMap.lookup bid (stBots s) of
     Just bot -> do
       let c = botPos bot
@@ -128,12 +128,12 @@ execSingleNanobotCommand _mat bid (Fill nd) = do
           mat = stMatrix s
       case voxel mat c' of
         Empty -> do
-          SM.put $ s{ stMatrix = MX.fill c' mat, stEnergy = stEnergy s + 12 }
+          put $ s{ stMatrix = MX.fill c' mat, stEnergy = stEnergy s + 12 }
         Full -> do
-          SM.put $ s{ stEnergy = stEnergy s + 6 }
+          put $ s{ stEnergy = stEnergy s + 6 }
 
 execSingleNanobotCommand _mat bid (Void nd) = do
-  s <- SM.get
+  s <- get
   case IntMap.lookup bid (stBots s) of
     Just bot -> do
       let c = botPos bot
@@ -141,19 +141,19 @@ execSingleNanobotCommand _mat bid (Void nd) = do
           mat = stMatrix s
       case voxel mat c' of
         Full -> do
-          SM.put $ s{ stMatrix = MX.void c' mat, stEnergy = stEnergy s - 12 }
+          put $ s{ stMatrix = MX.void c' mat, stEnergy = stEnergy s - 12 }
         Empty -> do
-          SM.put $ s{ stEnergy = stEnergy s + 3 }
+          put $ s{ stEnergy = stEnergy s + 3 }
               
 
-execFusion :: BotId -> BotId -> SM.State State ()
+execFusion :: BotId -> BotId -> State SystemState ()
 execFusion bidP bidS = do
-  s <- SM.get
+  s <- get
   case IntMap.lookup bidP (stBots s) of
     Just botP ->
       case IntMap.lookup bidS (stBots s) of
         Just botS -> do
-          SM.put $
+          put $
             s{ stBots =
                  IntMap.insert bidP botP{ botSeeds = IntSet.insert bidS $ botSeeds botS `IntSet.union` botSeeds botP } $
                  IntMap.delete bidS $

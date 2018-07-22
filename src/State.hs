@@ -12,8 +12,8 @@ import Model
 
 
 -- | The state S of an executing Nanobot Matter Manipulation System
-data State
-  = State
+data SystemState
+  = SystemState
   { stEnergy :: !Integer
   , stHarmonics :: !Bool
   , stResolution :: !Int -- TODO: Matrix自体に持たせる
@@ -22,12 +22,12 @@ data State
   , stTrace :: Trace
   } deriving (Eq, Ord, Show)
 
-stateIsWellformed :: State -> Bool
+stateIsWellformed :: SystemState -> Bool
 stateIsWellformed _ = True -- todo
 
-initialState :: Model -> Trace -> State
+initialState :: Model -> Trace -> SystemState
 initialState (Model res _mat) trace =
-  State
+  SystemState
   { stEnergy = 0
   , stHarmonics = False
   , stResolution = res
