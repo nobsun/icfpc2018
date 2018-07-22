@@ -86,6 +86,8 @@ execOneStepCommands' xs = do
 execSingleNanobotCommand :: Matrix -> BotId -> Command -> State SystemState ()
 execSingleNanobotCommand _mat _bid (FusionP _) = error "execSingleNanobotCommand: FusionP should not be passed"
 execSingleNanobotCommand _mat _bid (FusionS _) = error "execSingleNanobotCommand: FusionS should not be passed"
+execSingleNanobotCommand _mat _bid (GFill _ _) = error "execSingleNanobotCommand: GFill should not be passed"
+execSingleNanobotCommand _mat _bid (GVoid _ _) = error "execSingleNanobotCommand: GVoid should not be passed"
 execSingleNanobotCommand _mat _bid Halt = do
   s <- get
   case IntMap.elems (stBots s) of
