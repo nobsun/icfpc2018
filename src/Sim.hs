@@ -5,13 +5,10 @@ module Sim
   , execOneStepCommands
   ) where
 
-import Control.Arrow ((&&&))
 import Control.Monad
 import Control.Monad.State
-import Data.Function (on)
 import qualified Data.IntMap as IntMap
 import qualified Data.IntSet as IntSet
-import Data.List
 import qualified Data.Map as Map
 import Data.Set (Set)
 import qualified Data.Set as Set
@@ -70,16 +67,15 @@ execOneStepCommands' xs = do
         case Map.lookup c2 fusionSs of
           Just (bid2,c1') | c1==c1' -> return (bid1,bid2)
           _ -> error "failed to create a pair for fusion"
-  let byRegion x@(r,_) = Map.insertWith Set.union r (Set.singleton x)
+  let byRegion x@(r,bid) = Map.insertWith Set.union r (Set.singleton bid)
   let groupFills =
-        foldr byRegion Map.empty [ (region c1 c2,(bid,c,c1,c2))
+        foldr byRegion Map.empty [ (region c1 c2,bid)
                                  | (bid,GFill nd fd) <- xs
                                  , let (c,c1,c2) = (botPos (stBots s IntMap.! bid), c `add` nd, c1 `add` fd)]
   let groupVoids =
-        foldr byRegion Map.empty [ (region c1 c2,(bid,c,c1,c2))
+        foldr byRegion Map.empty [ (region c1 c2,bid)
                                  | (bid,GVoid nd fd) <- xs
                                  , let (c,c1,c2) = (botPos (stBots s IntMap.! bid), c `add` nd, c1 `add` fd)]
-  
   let mat = stMatrix s
   forM_ xs $ \(bid,cmd) -> do
     case cmd of
@@ -89,8 +85,8 @@ execOneStepCommands' xs = do
       GVoid _ _ -> return ()
       _ -> execSingleNanobotCommand mat bid cmd
   forM_ fusionPairs $ uncurry execFusion
-  forM_ groupFills execGroupFill
-  forM_ groupVoids execGroupVoid
+  forM_ (Map.keys groupFills) (execGroupFill <*> (groupFills Map.!))
+  forM_ (Map.keys groupVoids) (execGroupVoid <*> (groupVoids Map.!))
 
   -- コスト計算は実行前の状態に基づく
   if stHarmonics s then
@@ -201,11 +197,11 @@ execFusion bidP bidS = do
              , stEnergy = stEnergy s - 24
              }
 
-execGroupFill :: Set (Region, (BotId, Coord, Coord, Coord)) -> State SystemState ()
-execGroupFill xs = return ()
+execGroupFill :: Region -> Set BotId -> State SystemState ()
+execGroupFill r bs = return ()
 
-execGroupVoid :: Set (Region, (BotId, Coord, Coord, Coord)) -> State SystemState ()
-execGroupVoid xs = return ()
+execGroupVoid :: Region -> Set BotId -> State SystemState ()
+execGroupVoid r bs = return ()
 
 checkEmptyRegion :: Matrix -> Region -> Bool
 checkEmptyRegion mat r = all (isEmpty mat) (membersOfRegion r)
