@@ -1,5 +1,9 @@
 {-# OPTIONS_GHC -Wall #-}
-module Sim where
+module Sim
+  ( execAll
+  , execOneStep
+  , execOneStepCommands
+  ) where
 
 import Control.Monad
 import Control.Monad.State
@@ -11,38 +15,46 @@ import Coordinate
 import Matrix as MX
 import State
 
-execSteps :: State SystemState ()
-execSteps = do
+
+execAll :: SystemState -> SystemState
+execAll = execState execAll'
+
+execAll' :: State SystemState ()
+execAll' = do
   s <- get
   if IntMap.null (stBots s) then
     return ()
   else do
-    execOneStep
-    execSteps
+    execOneStep'
+    execAll'
 
-execOneStep :: State SystemState ()
-execOneStep = do
+
+execOneStep :: SystemState -> SystemState
+execOneStep = execState execOneStep'
+
+execOneStep' :: State SystemState ()
+execOneStep' = do
   s <- get
   unless (stateIsWellformed s) $ error "state is not wellformed"
   let n = IntMap.size (stBots s)
   case splitAt n (stTrace s) of
     (xs, traces') -> do
       unless (length xs == n) $ error "trace is short"
-      execBots $ zip (map fst (IntMap.toAscList (stBots s))) xs
-      s <- get
-      if stHarmonics s then
-        addCost $ 30 * stResolution s ^ (3 :: Int)
-      else
-        addCost $ 3 * stResolution s ^ (3 :: Int)
-      addCost $ 20 * n -- nanobotの個数は実行前の個数で良いのだろうか?
+      execOneStepCommands' $ zip (map fst (IntMap.toAscList (stBots s))) xs
       modify (\s -> s{ stTrace = traces' })
+
 
 addCost :: Int -> State SystemState ()
 addCost cost = modify (\s -> s{ stEnergy = stEnergy s + fromIntegral cost })
 
-execBots :: [(BotId, Command)] -> State SystemState ()
-execBots xs = do
+
+execOneStepCommands :: [(BotId, Command)] -> SystemState -> SystemState
+execOneStepCommands xs = execState (execOneStepCommands' xs)
+
+execOneStepCommands' :: [(BotId, Command)] -> State SystemState ()
+execOneStepCommands' xs = do
   s <- get
+  let n = IntMap.size (stBots s)
 
   let fusionPs = Map.fromList [(c, (bid, c `add` nd)) | (bid,FusionP nd) <- xs, let c = botPos (stBots s IntMap.! bid)]
       fusionSs = Map.fromList [(c, (bid, c `add` nd)) | (bid,FusionS nd) <- xs, let c = botPos (stBots s IntMap.! bid)]
@@ -60,6 +72,13 @@ execBots xs = do
       FusionS _ -> return ()
       _ -> execSingleNanobotCommand mat bid cmd
   forM_ fusionPairs $ uncurry execFusion
+
+  s <- get
+  if stHarmonics s then -- harmonicsの状態は実行後の状態で良いのだろうか?
+    addCost $ 30 * stResolution s ^ (3 :: Int)
+  else
+    addCost $ 3 * stResolution s ^ (3 :: Int)
+  addCost $ 20 * n -- nanobotの個数は実行前の個数で良いのだろうか?
 
 
 -- 事前条件のチェックは他のボットのコマンドの実行前のmatrixに対して行う必要があるので、
@@ -144,7 +163,7 @@ execSingleNanobotCommand _mat bid (Void nd) = do
           put $ s{ stMatrix = MX.void c' mat, stEnergy = stEnergy s - 12 }
         Empty -> do
           put $ s{ stEnergy = stEnergy s + 3 }
-              
+
 
 execFusion :: BotId -> BotId -> State SystemState ()
 execFusion bidP bidS = do

@@ -2,7 +2,6 @@
 module Main where
 
 import Control.Monad
-import qualified Control.Monad.State as SM
 import Options.Applicative
 import System.Exit
 import Text.Printf
@@ -42,7 +41,7 @@ main = do
   m@(Model _ mat) <- readModel $ optModel opt
   t <- readTraceFile $ optTrace opt
   let s = initialState m t
-      s2 = SM.execState execSteps s
+      s2 = execAll s
       success = mat == stMatrix s2
   printf "Assembly: %s\n" $ if success then "SUCCESS" else "FAILURE"
   printf "Energy: %d\n" $ stEnergy s2
