@@ -11,6 +11,8 @@ import Data.Word
 
 import Coordinate
 import Matrix
+import Model
+import Sim
 import State
 import TraceDecoder
 import TraceEncoder
@@ -243,6 +245,17 @@ traceDecoderSpec = do
     it "GVoid <1,0,0> <5,5,-5> is encoded as [10110000] [00100011] [00100011] [00011001]." $
       decodeTrace (BL.pack [0b10110000, 0b00100011, 0b00100011, 0b00011001]) `shouldBe` Right [GVoid (1,0,0) (5,5,-5)]
 
+
+simSpec :: Spec
+simSpec = do
+  describe "LA001_tgt.mdl energy" $ do
+    (mdl,nbt) <- runIO $ (,) <$> readModel "data/problemsL/LA001_tgt.mdl" <*> readTraceFile "data/dfltTracesL/LA001.nbt"
+    it "result of LA001_tgt.mdl + LA001.nbt should have energy 335123860" $
+      let s0 = initialState mdl nbt
+          s1 = execAll s0
+      in stEnergy s1 `shouldBe` 335123860      
+
+
 main :: IO ()
 main = hspec $ do
   coordinateSpec
@@ -250,3 +263,4 @@ main = hspec $ do
   traceEncoderSpec
   traceFileSpec
   traceDecoderSpec
+  simSpec
