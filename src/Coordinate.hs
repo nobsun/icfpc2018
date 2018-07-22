@@ -42,11 +42,11 @@ sub (Coord (x,y,z)) (Coord (x',y',z')) = (x-x',y-y',z-z')
 
 -- Manhattan length (or L1 norm)
 mlen :: CDiff -> Int
-mlen (dx, dy, dz) = sum [abs dx, abs dy, abs dz]
+mlen (dx, dy, dz) = sum $ map abs [dx,dy,dz]
 
 -- Chessboard length (or Chebyshev distance or L∞ norm)
 clen :: CDiff -> Int
-clen (dx, dy, dz) = maximum [abs dx, abs dy, abs dz]
+clen (dx, dy, dz) = maximum $ map abs [dx,dy,dz]
 
 adjacent :: Coord -> Coord -> Bool
 adjacent c c' = mlen (sub c c') == 1
