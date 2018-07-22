@@ -43,7 +43,9 @@ main = do
   t <- readTraceFile $ optTrace opt
   let s = initialStateForAssembly m t
       s2 = execAll s
-      success = mat == stMatrix s2
-  printf "Assembly: %s\n" $ if success then "SUCCESS" else "FAILURE"
+      success = stTgtMatrix s == stMatrix s2
+  putStrLn $ if success then "Success::" else "Failure::"
+  printf "Time: %d\n" $ stTime s2
+  printf "Commands: %d\n" $ stCommands s2
   printf "Energy: %d\n" $ stEnergy s2
   unless success $ exitFailure

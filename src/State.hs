@@ -23,6 +23,8 @@ data SystemState
   , stSrcMatrix :: Matrix   -- Source
   , stBots :: !(IntMap Bot) -- BotId to Bot mapping
   , stTrace :: Trace
+  , stTime :: !Int
+  , stCommands :: !Int
   } deriving (Eq, Ord, Show)
 
 
@@ -62,6 +64,8 @@ initialStateForAssemblyL tgtModel trace =
       , botSeeds = IntSet.fromList [2..20]
       }
   , stTrace = trace
+  , stTime = 0
+  , stCommands = 0
   }
 
 initialStateForReassembly :: Model -> Model -> Trace -> SystemState
@@ -80,6 +84,8 @@ initialStateForReassembly srcModel tgtModel trace =
       , botSeeds = IntSet.fromList [2..40] -- dup seeds in FullContest
       }
   , stTrace = trace
+  , stTime = 0
+  , stCommands = 0
   }
 
 initialStateForAssembly :: Model -> Trace -> SystemState

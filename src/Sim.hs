@@ -94,6 +94,7 @@ execOneStepCommands' xs = do
   else
     addCost $ 3 * stResolution s ^ (3 :: Int)
   addCost $ 20 * n
+  modify $ \s -> s{ stTime = stTime s + 1, stCommands = stCommands s + n }
 
 
 -- 事前条件のチェックは他のボットのコマンドの実行前のmatrixに対して行う必要があるので、
