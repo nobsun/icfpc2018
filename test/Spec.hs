@@ -163,6 +163,10 @@ binaryEncoderSpec = do
     it "Fill <0,-1,0> is encoded as [01010011]" $
       unwords (map showWord (encode (Fill (0,-1,0)))) `shouldBe` "01010011"
 
+  describe "Void" $ do
+    it "Void <1,0,1> is encoded as [10111010]" $
+      unwords (map showWord (encode (Void (1,0,1)))) `shouldBe` "10111010"
+
 
 traceFileSpec :: Spec
 traceFileSpec = do
@@ -223,7 +227,11 @@ traceDecoderSpec = do
   describe "Void" $ do
     it "Void <1,0,1> is encoded as [10111010]" $
       runGet trace (BS.pack [0b10111010]) `shouldBe` Right [Void (1,0,1)]
-
+{--
+  describe "GFill" $ do
+    it "GFill <0,-1,0> <10,-15,20> is encoded as [01010001] [00101000] [00001111] [00110010]." $
+      runGet trace (BS.pack [0b01010001, 0b00101000, 0b00001111, 0b00110010]) `shouldBe` Right [GFill (0,-1,0) (10,-15,20)]
+--}
 main :: IO ()
 main = hspec $ do
   coordinateSpec

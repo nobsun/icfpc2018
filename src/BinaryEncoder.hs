@@ -32,12 +32,8 @@ encodeSLD (0,0,dz) = (3, low5 ((toWord dz)+5))
 encodeND :: ND -> Word8
 encodeND (dx,dy,dz) = ((toWord dx)+1)*9 + ((toWord dy)+1)*3 + ((toWord dz)+1)
 
-encodeFD :: FD -> [Word8]
-encodeFD (dx,dy,dz) =
-  [ toWord (dx+30)
-  , toWord (dy+30)
-  , toWord (dz+30)
-  ]
+encodeFD :: FD -> (Word8, Word8, Word8)
+encodeFD (dx,dy,dz) = (toWord dx+30, toWord dy+30, toWord dz+30)
 
 encode :: Command -> [Word8]
 encode Halt = [255]
@@ -84,19 +80,21 @@ encode (Fill nd) =
     d = encodeND nd
 
 encode (Void nd) =
-  [ 0 .|. (shiftL d 2) .|. 3]
+  [ 0 .|. (shiftL d 3) .|. 2]
   where
     d = encodeND nd
 
 encode (GFill nd fd) =
-  [0 .|. (shiftL d 1) .|. 3] <> encodeFD fd
+  [0 .|. (shiftL d 1) .|. 3] <> [dx,dy,dz]
   where
     d = encodeND nd
+    (dx,dy,dz) = encodeFD fd
 
 encode (GVoid nd fd) =
-  [0 .|. (shiftL d 0) .|. 3] <> encodeFD fd
+  [0 .|. (shiftL d 0) .|. 3] <> [dx,dy,dz]
   where
     d = encodeND nd
+    (dx,dy,dz) = encodeFD fd
 
 encodeTrace :: Trace -> BL.ByteString
 encodeTrace cs =

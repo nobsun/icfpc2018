@@ -10,7 +10,7 @@ import qualified Data.ByteString as BS
 import Data.Word (Word8)
 import Data.Serialize.Get (Get, getWord8, runGet)
 
-import Coordinate (SLD, LLD, ND)
+import Coordinate (SLD, LLD, ND, FD)
 import State (Command (..), Trace)
 
 sld :: Word8 -> Word8 -> Get SLD
@@ -32,6 +32,9 @@ nd w = pure (fromIntegral dx' - 1, fromIntegral dy' - 1, fromIntegral dz' - 1)
   where
     (dx',tmp) = w `divMod` 9
     (dy',dz') = tmp `divMod` 3
+
+fd :: (Word8, Word8, Word8) -> Get FD
+fd (dx,dy,dz) = pure (fromIntegral dx, fromIntegral dy, fromIntegral dz)
 
 command :: Get Command
 command = do
