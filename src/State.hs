@@ -36,7 +36,7 @@ initialState (Model res _mat) trace =
       Bot
       { botId = 1
       , botPos = Coord (0,0,0)
-      , botSeeds = IntSet.fromList [2..20]
+      , botSeeds = IntSet.fromList [2..40] -- dup seeds in FullContest
       }
   , stTrace = trace
   }
