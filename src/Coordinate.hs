@@ -10,6 +10,9 @@ import Data.Bool (bool)
 import Data.Function (on)
 import Data.Tuple.Extra (fst3, snd3, thd3)
 
+fold3 :: (a -> b) -> (b -> b -> b) -> (a, a, a) -> b
+fold3 f bop (x, y, z) = f x `bop` f y `bop` f z 
+
 type R = Int
 
 isValidR :: R -> Bool
@@ -42,11 +45,11 @@ sub (Coord (x,y,z)) (Coord (x',y',z')) = (x-x',y-y',z-z')
 
 -- Manhattan length (or L1 norm)
 mlen :: CDiff -> Int
-mlen (dx, dy, dz) = sum $ map abs [dx,dy,dz]
+mlen = fold3 abs (+)
 
 -- Chessboard length (or Chebyshev distance or L∞ norm)
 clen :: CDiff -> Int
-clen (dx, dy, dz) = maximum $ map abs [dx,dy,dz]
+clen = fold3 abs max
 
 adjacent :: Coord -> Coord -> Bool
 adjacent c c' = mlen (sub c c') == 1
