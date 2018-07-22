@@ -67,6 +67,8 @@ data Command
   | Fission ND Int
   | Fill ND
   | Void ND
+  | GFill ND FD
+  | GVoid ND FD
   | FusionP ND
   | FusionS ND
   deriving (Eq, Ord, Show)
