@@ -64,6 +64,17 @@ executables:
     - directory
     - process
 
+  submit-gateway:
+    main:                gateway.hs
+    source-dirs:         app
+    ghc-options:
+    - -Wall
+    - -threaded
+    - -rtsopts
+    - -with-rtsopts=-N1
+    dependencies:
+    - icfpc2018
+
   simulator:
     main:                simulator.hs
     source-dirs:         app
