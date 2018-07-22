@@ -251,19 +251,19 @@ simSpec = do
   describe "LA001_tgt.mdl energy" $ do
     (mdl,nbt) <- runIO $ (,) <$> readModel "data/problemsL/LA001_tgt.mdl" <*> readTraceFile "data/dfltTracesL/LA001.nbt"
     it "result of LA001_tgt.mdl + LA001.nbt should have energy 335123860" $
-      let s0 = initialState mdl nbt
+      let s0 = initialStateForAssembly mdl nbt
           s1 = execAll s0
       in stEnergy s1 `shouldBe` 335123860
 
   describe "active nanobot cost" $ do
     it "computes active nanobot cost based on the number of bots in pre-state" $ do
-      let s0 = initialState (Model 20 (makeMatrix [])) []
+      let s0 = initialStateForAssembly (Model 20 (makeMatrix [])) []
           s1 = execOneStepCommands [(1,Fission (0,1,0) 10)] s0
       stEnergy s1 `shouldBe` 24044 -- 24044 = 24 + 3*20*20*20 + 20*1
 
   describe "active nanobot cost" $ do
     it "computes resonant subspace field cost based on the pre-state" $ do
-      let s0 = initialState (Model 20 (makeMatrix [])) []
+      let s0 = initialStateForAssembly (Model 20 (makeMatrix [])) []
           s1 = execOneStepCommands [(1,Flip)] s0
       stEnergy s1 `shouldBe` 24020 -- 24020 = 3*20*20*20 + 20*1
 

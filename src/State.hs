@@ -1,7 +1,6 @@
 {-# OPTIONS_GHC -Wall #-}
 module State where
 
-import Data.Maybe (mapMaybe);
 import Data.IntMap.Strict (IntMap)
 import qualified Data.IntMap.Strict as IntMap
 import Data.IntSet (IntSet)
@@ -20,8 +19,8 @@ data SystemState
   , stHarmonics :: !Bool
   , stResolution :: !Int -- TODO: Matrix自体に持たせる
   , stMatrix :: Matrix
-  , stTgtMatrix :: Maybe Matrix   -- Target
-  , stSrcMatrix :: Maybe Matrix   -- Source
+  , stTgtMatrix :: Matrix   -- Target
+  , stSrcMatrix :: Matrix   -- Source
   , stBots :: !(IntMap Bot) -- BotId to Bot mapping
   , stTrace :: Trace
   } deriving (Eq, Ord, Show)
@@ -46,16 +45,15 @@ stateIsWellformed s = and
   ]
 
 
-initialState :: Maybe Model -> Maybe Model -> Trace -> SystemState
-initialState Nothing   Nothing   _     = error "no model given!"
-initialState mTgtModel mSrcModel trace =
+initialState :: Model -> Model -> Trace -> SystemState
+initialState tgtModel srcModel trace =
   SystemState
   { stEnergy = 0
   , stHarmonics = False
-  , stResolution = head (mapMaybe (fmap mdResolution) [mTgtModel, mSrcModel])
-  , stMatrix = makeMatrix []
-  , stTgtMatrix = fmap mdMatrix mTgtModel
-  , stSrcMatrix = fmap mdMatrix mSrcModel
+  , stResolution = mdResolution tgtModel
+  , stMatrix = mdMatrix srcModel
+  , stTgtMatrix = mdMatrix tgtModel
+  , stSrcMatrix = mdMatrix srcModel
   , stBots = IntMap.singleton 1 $
       Bot
       { botId = 1
@@ -64,6 +62,10 @@ initialState mTgtModel mSrcModel trace =
       }
   , stTrace = trace
   }
+
+initialStateForAssembly :: Model -> Trace -> SystemState
+initialStateForAssembly tgtModel@(Model res _mat) trace =
+  initialState tgtModel (Model res (MX.makeMatrix [])) trace
 
 
 type BotId = Int
