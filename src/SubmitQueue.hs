@@ -13,10 +13,10 @@ import Data.Time
   (NominalDiffTime, diffUTCTime, getCurrentTime,
    FormatTime, formatTime)
 import Data.Time.Locale.Compat (defaultTimeLocale)
-import System.IO (stdout, BufferMode (LineBuffering), hSetBuffering)
+import System.IO (stdout, BufferMode (LineBuffering), hSetBuffering, hGetContents, hClose)
 import System.FilePath ((</>), (<.>))
 import System.Directory (renameFile)
-import System.Process (rawSystem, readProcess)
+import System.Process (rawSystem, runInteractiveProcess)
 import System.Exit (ExitCode (..))
 
 import Path (submitExport)
@@ -44,7 +44,7 @@ newLog = do
   return $ writeChan c
 
 formatLogStamp :: FormatTime t => t -> String
-formatLogStamp = formatTime defaultTimeLocale "%Y-%m-%d %HH:%MM:%SS"
+formatLogStamp = formatTime defaultTimeLocale "%Y-%m-%d %H:%M:%S"
 
 submitLoop :: (String -> IO ()) -> IO () -> IO ()
 submitLoop putLog_ submit_ =
@@ -67,7 +67,7 @@ submitLoop putLog_ submit_ =
       loop . Just =<< getCurrentTime
 
 formatFileStamp :: FormatTime t => t -> String
-formatFileStamp = formatTime defaultTimeLocale "%d-%H%M%D"
+formatFileStamp = formatTime defaultTimeLocale "%d-%H%M%S"
 
 queuedir :: FilePath
 queuedir = "/home/icfpc2018-queue"
@@ -80,10 +80,13 @@ submit q = do
   renameFile (queuedir </> fn) (submitExport </> dfn)
   ioExitCode =<< rawSystem "./lib/apply-submit.sh" [dfn]
 
+
+postdir :: FilePath
+postdir = "/home/icfpc2018-post/"
+
 waitRequest :: (String -> IO ()) -> Chan FilePath -> IO ()
 waitRequest putLog_ q = do
-  let postdir = "/home/icfpc2018-post/"
-      putLog = putLog_ . ("request: " ++)
+  let putLog = putLog_ . ("request: " ++)
       process req = case req of
         [_d, _ev, fn] | ".zip" `isSuffixOf` fn -> do
           ts <- formatFileStamp <$> getCurrentTime
@@ -95,8 +98,16 @@ waitRequest putLog_ q = do
           putLog $ "not zip, ignored: " ++ fn
         _             -> return ()
   reqs <- map words . lines
-          <$> readProcess "/usr/bin/inotifywait" ["-m", "-e", "close_write", postdir] ""
+          <$> readInotifyEvents
   mapM_ process reqs
+
+readInotifyEvents :: IO String
+readInotifyEvents = do
+  (_in', out, _err, _ph) <- runInteractiveProcess
+                            "/usr/bin/inotifywait" ["-m", "-e", "close_write", postdir]
+                            Nothing Nothing
+  hSetBuffering out LineBuffering
+  hGetContents out
 
 runExitCode :: a -> (Int -> a) -> ExitCode -> a
 runExitCode s e ec = case ec of
