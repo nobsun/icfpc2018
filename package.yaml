@@ -58,7 +58,7 @@ executables:
 
   simulator:
     main:                simulator.hs
-    source-dirs:         app-sim
+    source-dirs:         app
     dependencies:
     - icfpc2018
     - filepath
