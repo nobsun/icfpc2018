@@ -36,20 +36,15 @@ library:
 # - -Wall
 
 executables:
-  icfpc2018-exe:         &icfpc2018-exe
+  oga-exe:
     main:                Main.hs
-    source-dirs:         app
+    source-dirs:         oga
     ghc-options:
     - -threaded
     - -rtsopts
     - -with-rtsopts=-N
     dependencies:
     - icfpc2018
-
-  oga-exe:
-    <<:                  *icfpc2018-exe
-    main:                Main.hs
-    source-dirs:         oga
 
   oga-traces:
     main:                oga-traces.hs
