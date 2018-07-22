@@ -5,6 +5,7 @@ module OgaBot where
 import Control.Monad (replicateM)
 import qualified Control.Monad.State.Lazy as St
 import qualified Data.IntMap as IntMap
+import qualified Data.IntSet as IntSet
 import qualified Data.Set as Set
 
 import Coordinate
@@ -20,8 +21,8 @@ sMoveDx n = do
   St.modify f
   where
     f :: OgaBot -> OgaBot
-    f (Bot{botPos=Coord(x,y,z)}, trs) =
-      (Bot{botPos=Coord(x+n,y,z)}, SMove (n,0,0):trs)
+    f (bot@Bot{botPos=Coord(x,y,z)}, trs) =
+      (bot{botPos=Coord(x+n,y,z)}, SMove (n,0,0):trs)
 
 sMoveDy :: Int -> OgaBotSt ()
 sMoveDy 0 = return ()
@@ -29,8 +30,8 @@ sMoveDy n = do
   St.modify f
   where
     f :: OgaBot -> OgaBot
-    f (Bot{botPos=Coord(x,y,z)}, trs) =
-      (Bot{botPos=Coord(x,y+n,z)}, SMove (0,n,0):trs)
+    f (bot@Bot{botPos=Coord(x,y,z)}, trs) =
+      (bot{botPos=Coord(x,y+n,z)}, SMove (0,n,0):trs)
 
 sMoveDz:: Int -> OgaBotSt ()
 sMoveDz 0 = return ()
@@ -38,8 +39,8 @@ sMoveDz n = do
   St.modify f
   where
     f :: OgaBot -> OgaBot
-    f (Bot{botPos=Coord(x,y,z)}, trs) =
-      (Bot{botPos=Coord(x,y,z+n)}, SMove (0,0,n):trs)
+    f (bot@Bot{botPos=Coord(x,y,z)}, trs) =
+      (bot{botPos=Coord(x,y,z+n)}, SMove (0,0,n):trs)
 
 -- absolute coord
 sMoveAbs :: (Int,Int,Int) -> OgaBotSt ()
@@ -85,7 +86,7 @@ cHalt = do
 
 getOgaBotTrace :: Model -> Trace
 getOgaBotTrace m =
-  reverse $ snd $ St.execState (ogaBot m) (Bot{botPos=Coord(0,0,0)}, [])
+  reverse $ snd $ St.execState (ogaBot m) (Bot{botPos=Coord(0,0,0),botId=1,botSeeds=IntSet.empty}, [])
 
 ogaBot :: Model -> OgaBotSt ()
 ogaBot (Model r mtx) = do

@@ -1,8 +1,8 @@
 {-# OPTIONS_GHC -Wall #-}
 module State where
 
-import Data.IntMap (IntMap)
-import qualified Data.IntMap as IntMap
+import Data.IntMap.Strict (IntMap)
+import qualified Data.IntMap.Strict as IntMap
 import Data.IntSet (IntSet)
 import qualified Data.IntSet as IntSet
 
@@ -18,7 +18,7 @@ data State
   , stHarmonics :: !Bool
   , stResolution :: !Int -- TODO: Matrix自体に持たせる
   , stMatrix :: Matrix
-  , stBots :: IntMap Bot -- BotId to Bot mapping
+  , stBots :: !(IntMap Bot) -- BotId to Bot mapping
   , stTrace :: Trace
   } deriving (Eq, Ord, Show)
 
@@ -47,24 +47,24 @@ type BotId = Int
 -- | The state of an active nanobot bot
 data Bot
   = Bot
-  { botId  :: BotId  -- ^ bid in doc
-  , botPos :: Coord
-  , botSeeds :: IntSet -- set of BotId
+  { botId  :: !BotId  -- ^ bid in doc
+  , botPos :: !Coord
+  , botSeeds :: !IntSet -- set of BotId
   } deriving (Eq, Ord, Show)
 
 data Command
   = Halt
   | Wait
   | Flip
-  | SMove LLD
-  | LMove SLD SLD
-  | Fission ND Int
-  | Fill ND
-  | Void ND
-  | GFill ND FD
-  | GVoid ND FD
-  | FusionP ND
-  | FusionS ND
+  | SMove !LLD
+  | LMove !SLD !SLD
+  | Fission !ND !Int
+  | Fill !ND
+  | Void !ND
+  | GFill !ND !FD
+  | GVoid !ND !FD
+  | FusionP !ND
+  | FusionS !ND
   deriving (Eq, Ord, Show)
 
 type Trace = [Command]
