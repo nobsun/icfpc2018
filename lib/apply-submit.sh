@@ -36,4 +36,5 @@ curl -L \
   --data-urlencode privateID="$prv" \
   --data-urlencode submissionURL="$url" \
   --data-urlencode submissionSHA="$sha256" \
-  https://script.google.com/macros/s/AKfycbzQ7Etsj7NXCN5thGthCvApancl5vni5SFsb1UoKgZQwTzXlrH7/exec
+  https://script.google.com/macros/s/AKfycbzQ7Etsj7NXCN5thGthCvApancl5vni5SFsb1UoKgZQwTzXlrH7/exec \
+  > /home/icfpc2018/log/${zip_fn}.log 2>&1
