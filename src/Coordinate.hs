@@ -24,6 +24,7 @@ type LD = CDiff
 type SLD = CDiff
 type LLD = CDiff
 type ND = CDiff
+type FD = CDiff
 
 coord :: Alternative f
       => Int -> (Int, Int, Int) -> f Coord
