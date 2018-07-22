@@ -51,6 +51,9 @@ executables:
     source-dirs:         app-traces
     ghc-options:
     - -Wall
+    - -threaded
+    - -rtsopts
+    - -with-rtsopts=-N11
     dependencies:
     - icfpc2018
     - filepath
