@@ -1,4 +1,9 @@
-module BinaryEncoder where
+module BinaryEncoder
+  ( encodeCommand
+  , encodeCommand'
+  , encodeTrace
+  , writeTraceFile
+  ) where
 
 import Data.Bits
 import qualified Data.ByteString.Builder as BB
@@ -95,6 +100,12 @@ encode (GVoid nd fd) =
   where
     d = encodeND nd
     (dx,dy,dz) = encodeFD fd
+
+encodeCommand' :: Command -> [Word8]
+encodeCommand' = encode
+
+encodeCommand :: Command -> BL.ByteString
+encodeCommand = BL.pack . encode
 
 encodeTrace :: Trace -> BL.ByteString
 encodeTrace cs =

@@ -122,57 +122,57 @@ binaryEncoderSpec :: Spec
 binaryEncoderSpec = do
   describe "Halt" $ do
     it "Halt is encoded as [11111111]8." $
-      unwords (map showWord (encode Halt)) `shouldBe` "11111111"
+      unwords (map showWord (encodeCommand' Halt)) `shouldBe` "11111111"
 
   describe "Wait" $ do
     it "Wait is encoded as [11111110]8." $
-      unwords (map showWord (encode Wait)) `shouldBe` "11111110"
+      unwords (map showWord (encodeCommand' Wait)) `shouldBe` "11111110"
 
   describe "Flip" $ do
     it "Flip is encoded as [11111101]8." $
-      unwords (map showWord (encode Flip)) `shouldBe` "11111101"
+      unwords (map showWord (encodeCommand' Flip)) `shouldBe` "11111101"
 
   describe "SMove" $ do
     it "SMove <12,0,0> is encoded as [00010100] [00011011]." $
-      unwords (map showWord (encode (SMove (12,0,0)))) `shouldBe` "00010100 00011011"
+      unwords (map showWord (encodeCommand' (SMove (12,0,0)))) `shouldBe` "00010100 00011011"
 
     it "SMove <0,0,-4> is encoded as [00110100] [00001011]." $
-      unwords (map showWord (encode (SMove (0,0,-4)))) `shouldBe` "00110100 00001011"
+      unwords (map showWord (encodeCommand' (SMove (0,0,-4)))) `shouldBe` "00110100 00001011"
 
   describe "LMove" $ do
     it "LMove <3,0,0> <0,-5,0> is encoded as [10011100] [00001000]." $
-      unwords (map showWord (encode (LMove (3,0,0) (0,-5,0)))) `shouldBe` "10011100 00001000"
+      unwords (map showWord (encodeCommand' (LMove (3,0,0) (0,-5,0)))) `shouldBe` "10011100 00001000"
 
     it "LMove <0,-2,0> <0,0,2> is encoded as [11101100] [01110011]." $
-      unwords (map showWord (encode (LMove (0,-2,0) (0,0,2)))) `shouldBe` "11101100 01110011"
+      unwords (map showWord (encodeCommand' (LMove (0,-2,0) (0,0,2)))) `shouldBe` "11101100 01110011"
 
   describe "FusionP" $ do
     it "FusionP <-1,1,0> is encoded as [00111111]." $
-      unwords (map showWord (encode (FusionP (-1,1,0)))) `shouldBe` "00111111"
+      unwords (map showWord (encodeCommand' (FusionP (-1,1,0)))) `shouldBe` "00111111"
 
   describe "FusionS" $ do
     it "FusionS <1,-1,0> is encoded as [10011110]." $
-      unwords (map showWord (encode (FusionS (1,-1,0)))) `shouldBe` "10011110"
+      unwords (map showWord (encodeCommand' (FusionS (1,-1,0)))) `shouldBe` "10011110"
 
   describe "Fission" $ do
     it "Fission <0,0,1> 5 is encoded as [01110101] [00000101]" $
-      unwords (map showWord (encode (Fission (0,0,1) 5))) `shouldBe` "01110101 00000101"
+      unwords (map showWord (encodeCommand' (Fission (0,0,1) 5))) `shouldBe` "01110101 00000101"
 
   describe "Fill" $ do
     it "Fill <0,-1,0> is encoded as [01010011]" $
-      unwords (map showWord (encode (Fill (0,-1,0)))) `shouldBe` "01010011"
+      unwords (map showWord (encodeCommand' (Fill (0,-1,0)))) `shouldBe` "01010011"
 
   describe "Void" $ do
     it "Void <1,0,1> is encoded as [10111010]" $
-      unwords (map showWord (encode (Void (1,0,1)))) `shouldBe` "10111010"
+      unwords (map showWord (encodeCommand' (Void (1,0,1)))) `shouldBe` "10111010"
 
   describe "GFill" $ do
     it "GFill <0,-1,0> <10,-15,20> is encoded as [01010001] [00101000] [00001111] [00110010]" $
-      unwords (map showWord (encode (GFill (0,-1,0) (10,-15,20)))) `shouldBe` "01010001 00101000 00001111 00110010"
+      unwords (map showWord (encodeCommand' (GFill (0,-1,0) (10,-15,20)))) `shouldBe` "01010001 00101000 00001111 00110010"
 
   describe "GVoid" $ do
     it "GVoid <1,0,0> <5,5,-5> is encoded as [10110000] [00100011] [00100011] [00011001]" $
-      unwords (map showWord (encode (GVoid (1,0,0) (5,5,-5)))) `shouldBe` "10110000 00100011 00100011 00011001"
+      unwords (map showWord (encodeCommand' (GVoid (1,0,0) (5,5,-5)))) `shouldBe` "10110000 00100011 00100011 00011001"
 
 
 traceFileSpec :: Spec
