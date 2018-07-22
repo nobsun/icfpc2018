@@ -198,7 +198,15 @@ execFusion bidP bidS = do
              }
 
 execGroupFill :: Region -> Set BotId -> State SystemState ()
-execGroupFill r bs = return ()
+execGroupFill r bs = do
+  s <- get
+  let mat = stMatrix s
+  forM_ (membersOfRegion r) $ \c ->
+    case voxel mat c of
+      Empty -> do
+        put $ s{ stMatrix = MX.fill c mat, stEnergy = stEnergy s + 12 }
+      Full -> do
+        put $ s{ stEnergy = stEnergy s + 12 }
 
 execGroupVoid :: Region -> Set BotId -> State SystemState ()
 execGroupVoid r bs = return ()
