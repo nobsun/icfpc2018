@@ -65,13 +65,20 @@ execOneStepCommands' xs = do
           Just (bid2,c1') | c1==c1' -> return (bid1,bid2)
           _ -> error "failed to create a pair for fusion"
 
+  let groupFills = [] :: [[BotId]]
+  let groupVoids = [] :: [[BotId]]
+  
   let mat = stMatrix s
   forM_ xs $ \(bid,cmd) -> do
     case cmd of
       FusionP _ -> return ()
       FusionS _ -> return ()
+      GFill _ _ -> return ()
+      GVoid _ _ -> return ()
       _ -> execSingleNanobotCommand mat bid cmd
   forM_ fusionPairs $ uncurry execFusion
+  forM_ groupFills execGroupFill
+  forM_ groupVoids execGroupVoid
 
   -- コスト計算は実行前の状態に基づく
   if stHarmonics s then
