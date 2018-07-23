@@ -75,6 +75,20 @@ reassemble _mode nbt _n src_ tgt_ = do
   writeTraceFile nbt trs0
   return False
 
+reassembleO :: Mode -> FilePath -> Int -> FilePath -> FilePath -> IO Bool
+reassembleO mode nbt _n src_ tgt_ = do
+  src <- readModel $ Path.problems </> src_
+  tgt <- readModel $ Path.problems </> tgt_
+  let trs0 = getReassembleTrace src tgt
+      optimized = optimize (Model.emptyR tgt) tgt trs0
+      trs NoOpt  =  return (trs0,      False)
+      trs Opt    =  return (optimized, False)
+      trs TOpt   =  maybe (trs0, True) (\x -> (x, False)) <$> timeout limitAD (optimized `deepseq` return optimized)
+      trs Inv    =  maybe (trs0, True) (\x -> (x, False)) <$> timeout limitAD (optimized `deepseq` return optimized)
+  (t, tout) <- trs mode
+  writeTraceFile nbt t
+  return tout
+
 run :: (String -> IO ())
     -> FilePath
     -> Mode
@@ -89,7 +103,7 @@ run putLog dst mode pf = do
   tout <- runProblemFile
     (assemble    mode nbtPath)
     (disas       mode nbtPath)
-    (reassemble  mode nbtPath)
+    (reassembleO mode nbtPath)
     pf
   when tout . putLog $ "timeout: " ++ label
   putLog $ "done   : " ++ label
