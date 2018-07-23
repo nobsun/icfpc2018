@@ -53,7 +53,7 @@ executables:
 
   naive-traces:
     main:                naive.hs
-    source-dirs:         app-traces
+    source-dirs:         app-batch
     ghc-options:
     - -Wall
     - -threaded
