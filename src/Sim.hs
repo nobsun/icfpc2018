@@ -9,6 +9,7 @@ import Control.Monad
 import Control.Monad.State
 import qualified Data.IntMap as IntMap
 import qualified Data.IntSet as IntSet
+import Data.List
 import qualified Data.Map as Map
 import Data.Set (Set)
 import qualified Data.Set as Set
@@ -93,7 +94,23 @@ execOneStepCommands' xs = do
     High -> addCost $ 30 * stResolution s ^ (3 :: Int)
     Low  -> addCost $  3 * stResolution s ^ (3 :: Int)
   addCost $ 20 * n
+
+  -- stGroundedTable の情報の更新
+  let fillCoords =
+        [add (botPos (stBots s IntMap.! bid)) nd | (bid, Fill nd) <- xs] ++
+        concat [membersOfRegion r | r <- Map.keys groupFills]
+      voidCoords =
+        [add (botPos (stBots s IntMap.! bid)) nd | (bid, Void nd) <- xs] ++
+        concat [membersOfRegion r | r <- Map.keys groupVoids]
+  modify $ \s ->
+    s{ stGroundedTable =
+         voidGroundedTable voidCoords $
+         foldl' (flip fillGroundedTable) (stGroundedTable s) fillCoords
+     }
+
   modify $ \s -> s{ stTime = stTime s + 1, stCommands = stCommands s + n }
+
+  return ()
 
 
 -- 事前条件のチェックは他のボットのコマンドの実行前のmatrixに対して行う必要があるので、

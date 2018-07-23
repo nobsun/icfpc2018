@@ -38,10 +38,12 @@ data SystemState
   , stTrace :: Trace
   , stTime :: !Int
   , stCommands :: !Int
+  , stGroundedTable :: GroundedTable
   } deriving (Eq, Ord, Show)
 
 
 stateIsWellformed :: SystemState -> Bool
+-- stateIsWellformed s | isGrounded (stMatrix s) /= stateIsGrounded s = undefined
 stateIsWellformed s = and
   [ -- If the harmonics is Low, then all Full voxels of the matrix are grounded.
     stHarmonics s == High || stateIsGrounded s
@@ -61,7 +63,7 @@ stateIsWellformed s = and
 
 
 stateIsGrounded :: SystemState -> Bool
-stateIsGrounded = MX.isGrounded . stMatrix
+stateIsGrounded = isAllGrounded . stGroundedTable
 
 
 -- for lightning division
@@ -83,6 +85,7 @@ initialStateForAssemblyL tgtModel trace =
   , stTrace = trace
   , stTime = 0
   , stCommands = 0
+  , stGroundedTable = emptyGroundedTable
   }
 
 initialStateForReassembly :: Model -> Model -> Trace -> SystemState
@@ -103,6 +106,7 @@ initialStateForReassembly srcModel tgtModel trace =
   , stTrace = trace
   , stTime = 0
   , stCommands = 0
+  , stGroundedTable = foldl' (flip fillGroundedTable) emptyGroundedTable (matrixCoords (mdMatrix srcModel))
   }
 
 initialStateForAssembly :: Model -> Trace -> SystemState
