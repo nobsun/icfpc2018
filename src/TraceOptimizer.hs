@@ -10,8 +10,11 @@ import Sim
 import State
 
 optimize :: Model -> Model -> Trace -> Trace
-optimize ini fini trace = concat [IntMap.elems cmds | cmds <- loop Low (zip xs (tail (map fst xs) ++ [True])), not (all (== Wait) cmds)]
+optimize ini fini trace = concat [IntMap.elems cmds | cmds <- loop Low transitions, not (all (== Wait) cmds)]
   where
+    transitions :: [(Bool, IntMap Command, Bool)]
+    transitions = [(pre, cmds, post) | ((pre,cmds),post) <- zip xs (tail (map fst xs) ++ [True])]
+
     xs :: [(Bool, IntMap Command)]
     xs = f (initialStateForReassembly ini fini trace)
       where
@@ -25,26 +28,26 @@ optimize ini fini trace = concat [IntMap.elems cmds | cmds <- loop Low (zip xs (
           where
             n = IntMap.size (stBots s)
 
-    loop :: Harmonics -> [((Bool, IntMap Command), Bool)] -> [IntMap Command]
+    loop :: Harmonics -> [(Bool, IntMap Command, Bool)] -> [IntMap Command]
     loop _ [] = []
-    loop Low (((_True, cmds), True) : ys)
-      | Flip `elem` IntMap.elems cmds = replaceFlipWithWait cmds : loop Low ys
-      | otherwise = cmds : loop Low ys
-    loop Low yys@(((_True, cmds), False) : ys)
-      | Flip `elem` IntMap.elems cmds = cmds : loop High ys
-      | Wait `elem` IntMap.elems cmds = replaceWait Flip cmds : loop High ys
-      | otherwise = flipOnly cmds : cmds : loop High ys
-    loop High yys@(((True, cmds), True) : ys)
-      | Flip `elem` IntMap.elems cmds = cmds : loop Low ys
-      | Wait `elem` IntMap.elems cmds = replaceWait Flip cmds : loop Low ys
-      | otherwise = flipOnly cmds : loop Low yys
-    loop High (((False, cmds), True) : ys)
-      | Flip `elem` IntMap.elems cmds = cmds : loop Low ys
-      | Wait `elem` IntMap.elems cmds = replaceWait Flip cmds : loop Low ys
-      | otherwise = cmds : loop High ys
-    loop harmonics (((_grounded,cmds),_nextGrounded) : ys)
-      | Flip `elem` IntMap.elems cmds = cmds : loop (flipHarmonics harmonics) ys
-      | otherwise = cmds : loop harmonics ys
+    loop Low ((_True, cmds, True) : ts)
+      | Flip `elem` IntMap.elems cmds = replaceFlipWithWait cmds : loop Low ts
+      | otherwise = cmds : loop Low ts
+    loop Low tts@((_True, cmds, False) : ts)
+      | Flip `elem` IntMap.elems cmds = cmds : loop High ts
+      | Wait `elem` IntMap.elems cmds = replaceWait Flip cmds : loop High ts
+      | otherwise = flipOnly cmds : loop High tts
+    loop High tts@((True, cmds, True) : ts)
+      | Flip `elem` IntMap.elems cmds = cmds : loop Low ts
+      | Wait `elem` IntMap.elems cmds = replaceWait Flip cmds : loop Low ts
+      | otherwise = flipOnly cmds : loop Low tts
+    loop High ((False, cmds, True) : ts)
+      | Flip `elem` IntMap.elems cmds = cmds : loop Low ts
+      | Wait `elem` IntMap.elems cmds = replaceWait Flip cmds : loop Low ts
+      | otherwise = cmds : loop High ts
+    loop harmonics ((_preGrounded,cmds,_postGrounded) : ts)
+      | Flip `elem` IntMap.elems cmds = cmds : loop (flipHarmonics harmonics) ts
+      | otherwise = cmds : loop harmonics ts
 
     replaceWait :: Command -> IntMap Command -> IntMap Command
     replaceWait cmd cmds =
