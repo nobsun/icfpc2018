@@ -173,6 +173,9 @@ emptyGroundedTable =
   , gtClusters = Map.empty
   }
 
+makeGroundedTable :: [Coord] -> GroundedTable
+makeGroundedTable = foldl' (flip fillGroundedTable) emptyGroundedTable
+
 isAllGrounded :: GroundedTable -> Bool
 isAllGrounded = all MX.isSomeGrounded . gtClusters
 
@@ -216,9 +219,48 @@ fillGroundedTable v@(Coord (x,y,z)) gt
       | v1 `Map.member` gtRepr gt1 = mergeClusters v v1 gt1
       | otherwise = gt1
 
+
+voidGroundedTableSimple :: Coord -> GroundedTable -> Maybe GroundedTable
+voidGroundedTableSimple v@(Coord (x,y,z)) gt =
+  case Map.lookup v (gtRepr gt) of
+    Nothing -> Just gt
+    Just r ->
+      let m = gtClusters gt Map.! r
+          neighbors  = [v1 | v1 <- map Coord [(x-1,y,z),(x+1,y,z),(x,y-1,z),(x,y+1,z),(x,y,z-1),(x,y,z+1)], v1 `Map.member` gtRepr gt]
+          neighbors2 = [v1 | v1 <- map Coord [(x1,y1,z1) | x1 <- [x-1..x+1], y1 <- [y-1..y+1], z1 <- [z-1..z+1]], v1 `Map.member` gtRepr gt]
+      in if matrixSize m == 1 then -- この場合 v = r
+           Just $ GroundedTable
+           { gtRepr = Map.delete v (gtRepr gt)
+           , gtClusters = Map.delete r (gtClusters gt)
+           }
+         else if length neighbors < 2 || Map.size (gtClusters (makeGroundedTable neighbors2)) <= 1 then -- 隣接するボクセル同士は近くで繋がっている
+           if v == r then
+             -- この場合には代表元を他のものに変更する必要がある
+             let r2 = head [v' | v' <- matrixCoords m, v' /= v] -- 新しい代表元
+             in Just $ GroundedTable
+                { gtRepr = Map.fromList [(v',r2) | v' <- matrixCoords m, v' /= v] `Map.union` Map.delete v (gtRepr gt) -- left biased
+                , gtClusters = Map.insert r2 (MX.void v m) $ Map.delete v $ gtClusters gt
+                }
+           else
+             Just $ GroundedTable
+             { gtRepr = Map.delete v $ gtRepr gt
+             , gtClusters = Map.insert r (MX.void v m) $ gtClusters gt
+             }
+         else
+           Nothing
+
 voidGroundedTable :: [Coord] -> GroundedTable -> GroundedTable
-voidGroundedTable [] gt = gt
-voidGroundedTable vs gt =
+voidGroundedTable = f []
+  where
+    f vs' [] gt = voidGroundedTable' vs' gt
+    f vs' (v : vs) gt =
+      case voidGroundedTableSimple v gt of
+        Just gt' -> f vs' vs gt'
+        Nothing -> f (v : vs') vs gt
+
+voidGroundedTable' :: [Coord] -> GroundedTable -> GroundedTable
+voidGroundedTable' [] gt = gt
+voidGroundedTable' vs gt =
   GroundedTable
   { gtRepr = Map.unions $
       (gtRepr gt Map.\\ Map.fromSet (const ()) cs) : [gtRepr gt1 | gt1 <- gts]
@@ -231,5 +273,5 @@ voidGroundedTable vs gt =
     cs = Set.unions [Set.fromList $ matrixCoords $ gtClusters gt Map.! r | r <- Set.toList rs]
     gts = do
       r <- Set.toList rs
-      return $ foldl' (flip fillGroundedTable) emptyGroundedTable $
+      return $ makeGroundedTable $ Set.toList $
         Set.fromList (matrixCoords (gtClusters gt Map.! r)) Set.\\ vs'
