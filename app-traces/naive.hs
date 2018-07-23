@@ -55,8 +55,8 @@ descMode TOpt  = "optimize (may timeoute)"
 limitAD :: Int
 limitAD = 4 * 60 * 1000 * 1000
 
-limitR :: Int
-limitR = 6 * 60 * 1000 * 1000
+-- limitR :: Int
+-- limitR = 6 * 60 * 1000 * 1000
 
 assemble :: Mode -> FilePath -> Int -> FilePath -> IO Bool
 assemble mode nbt _n tgt_ = do
@@ -71,29 +71,35 @@ assemble mode nbt _n tgt_ = do
   return tout
 
 disassemble :: Mode -> FilePath -> Int -> FilePath -> IO Bool
-disassemble mode nbt _n src_ = do
+disassemble _mode nbt _n src_ = do
   src <- readModel $ Path.problems </> src_
   let trs0 = getDisassembleTrace src
-      optimized = optimize src (Model.emptyR src) trs0
-      trs NoOpt  =  return (trs0,      False)
-      trs Opt    =  return (optimized, False)
-      trs TOpt   =  maybe (trs0, True) (\x -> (x, False)) <$> timeout limitAD (optimized `deepseq` return optimized)
-  (t, tout) <- trs mode
-  writeTraceFile nbt t
-  return tout
+  writeTraceFile nbt trs0
+  return False
+  -- バグで結果が不正なトレースになってしまう可能性があるので、disassembly とreassembly のoptimizeはやらない
+  --     optimized = optimize src (Model.emptyR src) trs0
+  --     trs NoOpt  =  return (trs0,      False)
+  --     trs Opt    =  return (optimized, False)
+  --     trs TOpt   =  maybe (trs0, True) (\x -> (x, False)) <$> timeout limitAD (optimized `deepseq` return optimized)
+  -- (t, tout) <- trs mode
+  -- writeTraceFile nbt t
+  -- return tout
 
 reassemble :: Mode -> FilePath -> Int -> FilePath -> FilePath -> IO Bool
-reassemble mode nbt _n src_ tgt_ = do
+reassemble _mode nbt _n src_ tgt_ = do
   src <- readModel $ Path.problems </> src_
   tgt <- readModel $ Path.problems </> tgt_
   let trs0 = getReassembleTrace src tgt
-      optimized = optimize src tgt trs0
-      trs NoOpt  =  return (trs0,      False)
-      trs Opt    =  return (optimized, False)
-      trs TOpt   =  maybe (trs0, True) (\x -> (x, False)) <$> timeout limitR  (optimized `deepseq` return optimized)
-  (t, tout) <- trs mode
-  writeTraceFile nbt t
-  return tout
+  writeTraceFile nbt trs0
+  return False
+  -- バグで結果が不正なトレースになってしまう可能性があるので、disassembly とreassembly のoptimizeはやらない
+  --     optimized = optimize src tgt trs0
+  --     trs NoOpt  =  return (trs0,      False)
+  --     trs Opt    =  return (optimized, False)
+  --     trs TOpt   =  maybe (trs0, True) (\x -> (x, False)) <$> timeout limitR  (optimized `deepseq` return optimized)
+  -- (t, tout) <- trs mode
+  -- writeTraceFile nbt t
+  -- return tout
 
 run :: (String -> IO ())
     -> FilePath
