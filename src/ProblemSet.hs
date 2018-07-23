@@ -2,10 +2,11 @@
 
 module ProblemSet (
   problems, assembles, disassembles, reassembles,
-  filePrefix,
+  traceFile, filePrefix, number,
   ProblemFile (..), runProblemFile,
   ) where
 
+import System.FilePath ((<.>))
 import Text.Printf (printf)
 
 -----
@@ -41,16 +42,19 @@ runProblemFile a d r pf = case pf of
   ReassembleFile  i src tgt  -> r i src tgt
 
 assemble :: Int -> ProblemFile
-assemble n = AssembleFile n $ printf "FA%03d_tgt.mdl" n
+assemble n = AssembleFile n $ printf "FA%03d_tgt" n <.> "mdl"
 
 disassemble :: Int -> ProblemFile
-disassemble n = DisassembleFile n $ printf "FD%03d_src.mdl" n
+disassemble n = DisassembleFile n $ printf "FD%03d_src" n <.> "mdl"
 
 reassemble :: Int -> ProblemFile
 reassemble n = ReassembleFile n src tgt
   where
-    src = printf "FR%03d_src.mdl" n
-    tgt = printf "FR%03d_tgt.mdl" n
+    src = printf "FR%03d_src" n <.> "mdl"
+    tgt = printf "FR%03d_tgt" n <.> "mdl"
+
+traceFile :: ProblemFile -> FilePath
+traceFile pf = filePrefix pf ++ printf "%03d" (number pf) <.> "nbt"
 
 filePrefix :: ProblemFile -> String
 filePrefix =
@@ -58,3 +62,6 @@ filePrefix =
   (\_ _ -> "FA")
   (\_ _ -> "FD")
   (\_ _ _ -> "FR")
+
+number :: ProblemFile -> Int
+number = runProblemFile (\n _ -> n) (\n _ -> n) (\n _ _ -> n)
