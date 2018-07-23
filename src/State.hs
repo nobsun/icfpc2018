@@ -1,6 +1,10 @@
 {-# OPTIONS_GHC -Wall #-}
+{-# LANGUAGE DeriveGeneric #-}
+
 module State where
 
+import GHC.Generics (Generic)
+import Control.DeepSeq (NFData)
 import Data.IntMap.Strict (IntMap)
 import qualified Data.IntMap.Strict as IntMap
 import Data.IntSet (IntSet)
@@ -141,7 +145,9 @@ data Command
   | GVoid !ND !FD
   | FusionP !ND
   | FusionS !ND
-  deriving (Eq, Ord, Show)
+  deriving (Eq, Ord, Show, Generic)
+
+instance NFData Command
 
 type Trace = [Command]
 
@@ -204,7 +210,7 @@ fillGroundedTable v@(Coord (x,y,z)) gt
       GroundedTable
       { gtRepr = Map.insert v v (gtRepr gt)
       , gtClusters = Map.insert v (makeMatrix [v]) (gtClusters gt)
-      }   
+      }
     neighbors = map Coord [(x-1,y,z),(x+1,y,z),(x,y-1,z),(x,y+1,z),(x,y,z-1),(x,y,z+1)]
     f gt1 v1
       | v1 `Map.member` gtRepr gt1 = mergeClusters v v1 gt1
