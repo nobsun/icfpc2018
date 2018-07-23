@@ -2,31 +2,19 @@ import Control.Applicative ((*>))
 import Control.Monad (forever, unless, void)
 import Control.Concurrent (forkIO, getNumCapabilities)
 import Control.Concurrent.Chan (newChan, readChan, writeChan)
-import Data.List (isPrefixOf, isSuffixOf)
 import System.Environment (getArgs)
 import System.IO (stdout, BufferMode (LineBuffering), hSetBuffering)
-import System.FilePath ((</>), (<.>))
-import System.Directory (getDirectoryContents, doesDirectoryExist)
-import System.Process (system)
-import System.Exit (ExitCode (..))
+import System.FilePath ((</>))
+import System.Directory (doesDirectoryExist)
 
+import qualified Path
+import ProblemSet (ProblemFile, runProblemFile, problems, traceFile)
 import TraceEncoder (writeTraceFile)
 import Model (readModel)
 import qualified Model
-import NaiveBot (getAssembleTrace, getDisassembleTrace)
+import NaiveBot (getAssembleTrace, getDisassembleTrace, getReassembleTrace)
 import TraceOptimizer (optimize)
 
-
-runExitCode :: a -> (Int -> a) -> ExitCode -> a
-runExitCode s e ec = case ec of
-  ExitSuccess   -> s
-  ExitFailure c -> e c
-
-ioExitCode :: ExitCode -> IO ()
-ioExitCode = runExitCode (return ()) (fail . ("exited failure with code: " ++) . show)
-
-getChilds :: FilePath -> IO [FilePath]
-getChilds = (filter (`notElem` [".", ".."]) <$>) . getDirectoryContents
 
 newLog :: IO (String -> IO ())
 newLog = do
@@ -50,55 +38,48 @@ concurrent n as = do
   mapM_ (writeChan tq) $ map Just as ++ replicate n Nothing  -- enqueue tasks and end-marks
   sequence_ . replicate n $ readChan wq                      -- waiting finish
 
-runAssemble :: Bool -> FilePath -> FilePath -> IO ()
-runAssemble doOpt mdl nbt = do
-  model <- readModel mdl
-  let trs0 = getAssembleTrace model
+assemble :: Bool -> FilePath -> Int -> FilePath -> IO ()
+assemble doOpt nbt _n tgt_ = do
+  tgt <- readModel $ Path.problems </> tgt_
+  let trs0 = getAssembleTrace tgt
       trs
-        | doOpt      =  optimize (Model.emptyR model) model trs0
+        | doOpt      =  optimize (Model.emptyR tgt) tgt trs0
         | otherwise  =  trs0
   writeTraceFile nbt trs
 
-runDisassemble :: Bool -> FilePath -> FilePath -> IO ()
-runDisassemble doOpt mdl nbt = do
-  model <- readModel mdl
-  let trs0 = getDisassembleTrace model
+disassemble :: Bool -> FilePath -> Int -> FilePath -> IO ()
+disassemble doOpt nbt _n src_ = do
+  src <- readModel $ Path.problems </> src_
+  let trs0 = getDisassembleTrace src
       trs
-        | doOpt      =  optimize model (Model.emptyR model) trs0
+        | doOpt      =  optimize src (Model.emptyR src) trs0
         | otherwise  =  trs0
   writeTraceFile nbt trs
 
-stripSuffix_ :: String -> String -> String
-stripSuffix_ suf x
-  | suf `isSuffixOf` x = take (length x - length suf) x
-  | otherwise          = x
-
-tgtSuf :: String
-tgtSuf = "_tgt.mdl"
-
-srcSuf :: String
-srcSuf = "_src.mdl"
-
-problemsDir :: FilePath
-problemsDir = "/home/icfpc2018-data/problems/F"
-
-defaultTraceDir :: FilePath
-defaultTraceDir = "/home/icfpc2018-data/default/F"
+reassemble :: Bool -> FilePath -> Int -> FilePath -> FilePath -> IO ()
+reassemble doOpt nbt _n src_ tgt_ = do
+  src <- readModel $ Path.problems </> src_
+  tgt <- readModel $ Path.problems </> tgt_
+  let trs0 = getReassembleTrace src tgt
+      trs
+        | doOpt      =  optimize src tgt trs0
+        | otherwise  =  trs0
+  writeTraceFile nbt trs
 
 run :: (String -> IO ())
     -> FilePath
     -> Bool
-    -> FilePath
+    -> ProblemFile
     -> IO ()
-run putLog dst doOpt sf = do
-  (suf, action) <- case take 2 sf of
-    "FA"  ->  return (tgtSuf, runAssemble)
-    "FD"  ->  return (srcSuf, runDisassemble)
-    x     ->  fail $ "unknown type: " ++ x
-  let df = stripSuffix_ suf sf <.> "nbt"
-      label = sf ++ " --> " ++ df
+run putLog dst doOpt pf = do
+  let nbtPath = dst </> traceFile pf
+      label = nbtPath
   putLog $ "running: " ++ label
-  action doOpt (problemsDir </> sf) (dst </> df)
+  runProblemFile
+    (assemble    doOpt nbtPath)
+    (disassemble doOpt nbtPath)
+    (reassemble  doOpt nbtPath)
+    pf
   putLog $ "done   : " ++ label
 
 runAll :: FilePath -> Bool -> IO ()
@@ -107,14 +88,10 @@ runAll dst doOpt = do
   putStrLn $ "mode: " ++ if doOpt then "optimize" else "no-optimize"
   do e <- doesDirectoryExist dst
      unless e . fail $ dst ++ " does not exist!"
-  putStrLn "copyng default FR*.nbt files ..."
-  let dtr = defaultTraceDir
-  (ioExitCode =<<) . system $ unwords ["cp", "-a", dtr </> "FR*.nbt", dst ++ "/"]
-  putStrLn "processing FA* files and FD* files ..."
-  sfs <- filter ((||) <$> ("FA" `isPrefixOf`) <*> ("FD" `isPrefixOf`)) <$> getChilds problemsDir
+  putStrLn "processing FA*, FD*, FR* files ..."
   putLog <- newLog
   n <- getNumCapabilities
-  concurrent (n - 1) $ map (run putLog dst doOpt) sfs
+  concurrent (n - 1) $ map (run putLog dst doOpt) problems
 
 main :: IO ()
 main = do

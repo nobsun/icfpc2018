@@ -62,7 +62,6 @@ executables:
     - icfpc2018
     - filepath
     - directory
-    - process
 
   submit-gateway:
     main:                gateway.hs
