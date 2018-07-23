@@ -11,8 +11,8 @@ import System.Process (system)
 import System.Exit (ExitCode (..))
 
 import TraceEncoder (writeTraceFile)
-import Matrix (makeMatrix)
-import Model (Model (mdMatrix), readModel)
+import Model (readModel)
+import qualified Model
 import NaiveBot (getAssembleTrace, getDisassembleTrace)
 import TraceOptimizer (optimize)
 
@@ -50,24 +50,22 @@ concurrent n as = do
   mapM_ (writeChan tq) $ map Just as ++ replicate n Nothing  -- enqueue tasks and end-marks
   sequence_ . replicate n $ readChan wq                      -- waiting finish
 
-runAssemble :: FilePath -> FilePath -> IO ()
-runAssemble mdl nbt = do
+runAssemble :: Bool -> FilePath -> FilePath -> IO ()
+runAssemble doOpt mdl nbt = do
   model <- readModel mdl
   let trs0 = getAssembleTrace model
-      trs  =  optimize (model { mdMatrix = makeMatrix [] }) model trs0
-      -- trs
-      --   | n < 115    =  optimize (model { mdMatrix = makeMatrix [] }) model trs0
-      --   | otherwise  =  trs0
+      trs
+        | doOpt      =  optimize (Model.emptyR model) model trs0
+        | otherwise  =  trs0
   writeTraceFile nbt trs
 
-runDisassemble :: FilePath -> FilePath -> IO ()
-runDisassemble mdl nbt = do
+runDisassemble :: Bool -> FilePath -> FilePath -> IO ()
+runDisassemble doOpt mdl nbt = do
   model <- readModel mdl
   let trs0 = getDisassembleTrace model
-      trs  =  optimize model (model { mdMatrix = makeMatrix [] }) trs0
-      -- trs
-      --   | n < 115    =  optimize model (model { mdMatrix = makeMatrix [] }) trs0
-      --   | otherwise  =  trs0
+      trs
+        | doOpt      =  optimize model (Model.emptyR model) trs0
+        | otherwise  =  trs0
   writeTraceFile nbt trs
 
 stripSuffix_ :: String -> String -> String
@@ -89,9 +87,10 @@ defaultTraceDir = "/home/icfpc2018-data/default/F"
 
 run :: (String -> IO ())
     -> FilePath
+    -> Bool
     -> FilePath
     -> IO ()
-run putLog dst sf = do
+run putLog dst doOpt sf = do
   (suf, action) <- case take 2 sf of
     "FA"  ->  return (tgtSuf, runAssemble)
     "FD"  ->  return (srcSuf, runDisassemble)
@@ -99,26 +98,29 @@ run putLog dst sf = do
   let df = stripSuffix_ suf sf <.> "nbt"
       label = sf ++ " --> " ++ df
   putLog $ "running: " ++ label
-  action (problemsDir </> sf) (dst </> df)
+  action doOpt (problemsDir </> sf) (dst </> df)
   putLog $ "done   : " ++ label
 
-runAll :: FilePath -> IO ()
-runAll dst = do
+runAll :: FilePath -> Bool -> IO ()
+runAll dst doOpt = do
+  putStrLn $ "dest-dir: " ++ dst
+  putStrLn $ "mode: " ++ if doOpt then "optimize" else "no-optimize"
   do e <- doesDirectoryExist dst
      unless e . fail $ dst ++ " does not exist!"
   putStrLn "copyng default FR*.nbt files ..."
   let dtr = defaultTraceDir
   (ioExitCode =<<) . system $ unwords ["cp", "-a", dtr </> "FR*.nbt", dst ++ "/"]
   putStrLn "processing FA* files and FD* files ..."
-  sfs <- filter ((||) <$> ("FA" `isPrefixOf`) <*> ("FD" `isSuffixOf`)) <$> getChilds problemsDir
+  sfs <- filter ((||) <$> ("FA" `isPrefixOf`) <*> ("FD" `isPrefixOf`)) <$> getChilds problemsDir
   putLog <- newLog
   n <- getNumCapabilities
-  concurrent (n - 1) $ map (run putLog dst) sfs
+  concurrent (n - 1) $ map (run putLog dst doOpt) sfs
 
 main :: IO ()
 main = do
   args <- getArgs
-  dst <- case args of
-    d:_ -> return d
+  (dst, doOpt) <- case args of
+    d:"opt":_  ->  return (d, True)
+    d:_        ->  return (d, False)
     _   -> fail "DEST_DIRECTORY is required."
-  runAll dst
+  runAll dst doOpt
