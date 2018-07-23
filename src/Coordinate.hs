@@ -11,7 +11,7 @@ import Data.Function (on)
 import Data.Tuple.Extra (fst3, snd3, thd3)
 
 fold3 :: (a -> b) -> (b -> b -> b) -> (a, a, a) -> b
-fold3 f bop (x, y, z) = f x `bop` f y `bop` f z 
+fold3 f bop (x, y, z) = f x `bop` f y `bop` f z
 
 type R = Int
 
@@ -19,15 +19,9 @@ isValidR :: R -> Bool
 isValidR = (&&) . (0 <) <*> (<= 250)
 
 newtype Coord = Coord (Int, Int, Int) deriving (Eq, Ord, Show)
+
 unCoord :: Coord -> (Int,Int,Int)
 unCoord (Coord c) = c
-
-type CDiff = (Int, Int, Int)
-type LD = CDiff
-type SLD = CDiff
-type LLD = CDiff
-type ND = CDiff
-type FD = CDiff
 
 coord :: Alternative f
       => Int -> (Int, Int, Int) -> f Coord
@@ -36,6 +30,16 @@ coord r (x, y, z) =
   guard (0 <= y && y <= r - 1) *>
   guard (0 <= z && z <= r - 1) *>
   pure (Coord (x, y, z))
+
+type CDiff = (Int, Int, Int)
+type LD = CDiff
+type SLD = CDiff
+type LLD = CDiff
+type ND = CDiff
+type FD = CDiff
+
+negateDiff :: CDiff -> CDiff
+negateDiff (x, y, z) = (-x, -y, -z)
 
 add :: Coord -> CDiff -> Coord
 add (Coord (x,y,z)) (dx,dy,dz) = Coord (x+dx,y+dy,z+dz)
