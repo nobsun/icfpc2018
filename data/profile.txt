@@ -1,0 +1,16 @@
+Team Private ID: 7a547388c8064acebe955872d4c18f14
+Team Name: Team Sampou
+Team E-mail Address: icfpc2018@reasoning.tokyo
+Team Members:
+  Katsutoshi Ito
+  Kei Hibino
+  Masahiro Sakai
+  Nobuo Yamashita
+  Yasuyuki Ogawa
+  Chikanobu Toyofuku
+Team Country(ies): JPN
+Team Programming Language(s): Haskell, sh
+Team Homepage:
+Source Code URL:
+Source Code SHA256 Checksum:
+Comments:
