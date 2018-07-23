@@ -121,6 +121,15 @@ executables:
     - mtl
     - optparse-applicative
 
+  trace-optimize:
+    main:                trace-optimize.hs
+    source-dirs:         app
+    dependencies:
+    - icfpc2018
+    - filepath
+    - mtl
+    - optparse-applicative
+
 tests:
   icfpc2018-test:
     main:                Spec.hs
