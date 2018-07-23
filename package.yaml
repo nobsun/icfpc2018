@@ -94,16 +94,6 @@ executables:
     - mtl
     - optparse-applicative
 
-  test2:
-    main:                test2.hs
-    source-dirs:         .
-    dependencies:
-    - icfpc2018
-    - filepath
-    - mtl
-    - optparse-applicative
-
-
 tests:
   icfpc2018-test:
     main:                Spec.hs
