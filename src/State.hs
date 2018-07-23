@@ -173,6 +173,9 @@ emptyGroundedTable =
   , gtClusters = Map.empty
   }
 
+makeGroundedTable :: [Coord] -> GroundedTable
+makeGroundedTable = foldl' (flip fillGroundedTable) emptyGroundedTable
+
 isAllGrounded :: GroundedTable -> Bool
 isAllGrounded = all MX.isSomeGrounded . gtClusters
 
@@ -231,5 +234,5 @@ voidGroundedTable vs gt =
     cs = Set.unions [Set.fromList $ matrixCoords $ gtClusters gt Map.! r | r <- Set.toList rs]
     gts = do
       r <- Set.toList rs
-      return $ foldl' (flip fillGroundedTable) emptyGroundedTable $
+      return $ makeGroundedTable $ Set.toList $
         Set.fromList (matrixCoords (gtClusters gt Map.! r)) Set.\\ vs'
