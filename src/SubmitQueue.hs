@@ -19,7 +19,7 @@ import System.Directory (renameFile)
 import System.Process (rawSystem, runInteractiveProcess)
 import System.Exit (ExitCode (..))
 
-import Path (submitExport)
+import qualified Path
 
 
 submitGateway :: IO ()
@@ -81,7 +81,7 @@ submit q = do
   fn <- readChan q
   ts <- formatFileStamp <$> getZonedTime
   let dfn = ts ++ "_" ++ fn
-  renameFile (queuedir </> fn) (submitExport </> dfn)
+  renameFile (queuedir </> fn) (Path.submitExport </> dfn)
   ioExitCode =<< rawSystem "./lib/apply-submit.sh" [dfn]
 
 
