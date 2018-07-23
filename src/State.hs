@@ -8,6 +8,9 @@ import qualified Data.IntSet as IntSet
 import Data.List
 import Data.Map.Strict (Map)
 import qualified Data.Map.Strict as Map
+import Data.Maybe
+import Data.Set (Set)
+import qualified Data.Set as Set
 
 import Coordinate
 import Matrix as MX
@@ -147,6 +150,7 @@ data GroundedTable
   { gtRepr :: !(Map Coord Coord) -- 各filledなvoxedから代表元への写像
   , gtClusters :: !(Map Coord Matrix) -- 代表元からそのクラスタに属するボクセルの集合への写像
   }
+  deriving (Eq, Ord, Show)
 
 emptyGroundedTable :: GroundedTable
 emptyGroundedTable =
@@ -167,10 +171,15 @@ lookupCluster v gt = gtClusters gt Map.! (getRepr gt v)
 mergeClusters :: Coord -> Coord -> GroundedTable -> GroundedTable
 mergeClusters v1 v2 gt
   | v1' == v2' = gt
-  | otherwise  =
+  | matrixSize m1 >= matrixSize m2 =
       GroundedTable
       { gtRepr = Map.fromList [(c,v1') | c <- matrixCoords m2] `Map.union` gtRepr gt
       , gtClusters = Map.insert v1' (matrixUnion m1 m2) $ Map.delete v2' $ gtClusters gt
+      }
+  | otherwise =
+      GroundedTable
+      { gtRepr = Map.fromList [(c,v2') | c <- matrixCoords m1] `Map.union` gtRepr gt
+      , gtClusters = Map.insert v2' (matrixUnion m1 m2) $ Map.delete v1' $ gtClusters gt
       }
   where
     v1' = getRepr gt v1
@@ -179,14 +188,31 @@ mergeClusters v1 v2 gt
     m2 = gtClusters gt Map.! v2'
 
 fillGroundedTable :: Coord -> GroundedTable -> GroundedTable
-fillGroundedTable v@(Coord (x,y,z)) gt = foldl' f gt0 neighbors
+fillGroundedTable v@(Coord (x,y,z)) gt
+  | v `Map.member` gtRepr gt = gt
+  | otherwise = foldl' f gt0 neighbors
   where
     gt0 =
       GroundedTable
       { gtRepr = Map.insert v v (gtRepr gt)
       , gtClusters = Map.insert v (makeMatrix [v]) (gtClusters gt)
       }   
-    neighbors = map Coord [(x-1,y,z),(x+1,y,z),(x,y-1,z),(x,y+1,z),(x,y,z-1),(x,y,z+1)]      
+    neighbors = map Coord [(x-1,y,z),(x+1,y,z),(x,y-1,z),(x,y+1,z),(x,y,z-1),(x,y,z+1)]
     f gt1 v1
       | v1 `Map.member` gtRepr gt1 = mergeClusters v v1 gt1
       | otherwise = gt1
+
+voidGroundedTable :: [Coord] -> GroundedTable -> GroundedTable
+voidGroundedTable vs gt =
+  GroundedTable
+  { gtRepr = Map.unions $
+      (gtRepr gt Map.\\ Map.fromSet (const ()) cs) : [gtRepr gt1 | gt1 <- gts]
+  , gtClusters = Map.unions $
+      (gtClusters gt Map.\\ Map.fromSet (const ()) rs) : [gtClusters gt1 | gt1 <- gts]
+  }
+  where
+    rs = Set.fromList $ catMaybes [Map.lookup v (gtRepr gt) | v <- vs]
+    cs = Set.unions [Set.fromList $ matrixCoords $ gtClusters gt Map.! r | r <- Set.toList rs]
+    gts = do
+      r <- Set.toList rs
+      return $ foldl' (flip fillGroundedTable) emptyGroundedTable (matrixCoords (gtClusters gt Map.! r))
