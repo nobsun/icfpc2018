@@ -44,7 +44,7 @@ data SystemState
 stateIsWellformed :: SystemState -> Bool
 stateIsWellformed s = and
   [ -- If the harmonics is Low, then all Full voxels of the matrix are grounded.
-    stHarmonics s == High || isGrounded (stMatrix s)
+    stHarmonics s == High || stateIsGrounded s
   , -- Each active nanobot has a different identifier.
     and [botId bot == bid | (bid,bot) <- IntMap.toList (stBots s)]
   , -- The position of each active nanobot is distinct and is Void in the matrix.
@@ -58,6 +58,10 @@ stateIsWellformed s = and
       `IntSet.intersection`
       IntMap.keysSet (stBots s)
   ]
+
+
+stateIsGrounded :: SystemState -> Bool
+stateIsGrounded = MX.isGrounded . stMatrix
 
 
 -- for lightning division

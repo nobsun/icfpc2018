@@ -22,7 +22,7 @@ optimize ini fini trace = concat [IntMap.elems cmds | cmds <- loop Low transitio
             f s
               | IntMap.null (stBots s) = []
               | otherwise = 
-                  ( isGrounded (stMatrix s)
+                  ( stateIsGrounded s
                   , IntMap.fromAscList $ [(bid, cmd) | ((bid,_),cmd) <- zip (IntMap.toAscList (stBots s)) (take n (stTrace s))]
                   ) : f (execOneStep s)
               where
