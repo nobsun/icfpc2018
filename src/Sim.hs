@@ -89,10 +89,9 @@ execOneStepCommands' xs = do
   forM_ (Map.keys groupVoids) (execGroupVoid <*> (groupVoids Map.!))
 
   -- コスト計算は実行前の状態に基づく
-  if stHarmonics s then
-    addCost $ 30 * stResolution s ^ (3 :: Int)
-  else
-    addCost $ 3 * stResolution s ^ (3 :: Int)
+  case stHarmonics s of
+    High -> addCost $ 30 * stResolution s ^ (3 :: Int)
+    Low  -> addCost $  3 * stResolution s ^ (3 :: Int)
   addCost $ 20 * n
   modify $ \s -> s{ stTime = stTime s + 1, stCommands = stCommands s + n }
 
@@ -114,7 +113,7 @@ execSingleNanobotCommand _mat _bid Halt = do
 execSingleNanobotCommand _mat _bid Wait = return ()
 execSingleNanobotCommand _mat _bid Flip = do
   s <- get
-  put $ s{ stHarmonics = not (stHarmonics s) }
+  put $ s{ stHarmonics = flipHarmonics (stHarmonics s) }
 execSingleNanobotCommand mat bid (SMove lld) = do
   s <- get
   case IntMap.lookup bid (stBots s) of

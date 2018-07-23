@@ -12,11 +12,19 @@ import Matrix as MX
 import Model
 
 
+data Harmonics = High | Low
+  deriving (Eq, Ord, Show, Bounded, Enum)
+
+flipHarmonics :: Harmonics -> Harmonics
+flipHarmonics High = Low
+flipHarmonics Low = High
+
+
 -- | The state S of an executing Nanobot Matter Manipulation System
 data SystemState
   = SystemState
   { stEnergy :: !Integer
-  , stHarmonics :: !Bool
+  , stHarmonics :: !Harmonics
   , stResolution :: !Int -- TODO: Matrix自体に持たせる
   , stMatrix :: Matrix
   , stTgtMatrix :: Matrix   -- Target
@@ -31,7 +39,7 @@ data SystemState
 stateIsWellformed :: SystemState -> Bool
 stateIsWellformed s = and
   [ -- If the harmonics is Low, then all Full voxels of the matrix are grounded.
-    stHarmonics s || isGrounded (stMatrix s)
+    stHarmonics s == High || isGrounded (stMatrix s)
   , -- Each active nanobot has a different identifier.
     and [botId bot == bid | (bid,bot) <- IntMap.toList (stBots s)]
   , -- The position of each active nanobot is distinct and is Void in the matrix.
@@ -52,7 +60,7 @@ initialStateForAssemblyL :: Model -> Trace -> SystemState
 initialStateForAssemblyL tgtModel trace =
   SystemState
   { stEnergy = 0
-  , stHarmonics = False
+  , stHarmonics = Low
   , stResolution = mdResolution tgtModel
   , stMatrix = MX.makeMatrix []
   , stTgtMatrix = mdMatrix tgtModel
@@ -72,7 +80,7 @@ initialStateForReassembly :: Model -> Model -> Trace -> SystemState
 initialStateForReassembly srcModel tgtModel trace =
   SystemState
   { stEnergy = 0
-  , stHarmonics = False
+  , stHarmonics = Low
   , stResolution = mdResolution tgtModel
   , stMatrix = mdMatrix srcModel
   , stTgtMatrix = mdMatrix tgtModel
