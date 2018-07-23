@@ -42,36 +42,47 @@ concurrent n as = do
 data Mode
   = NoOpt
   | Opt
+  --- | TOpt
   deriving (Eq, Show)
 
 descMode :: Mode -> String
 descMode NoOpt = "no-optimize"
 descMode Opt   = "optimize"
+--- descMode TOpt  = "optimize (may timeoute)"
+
+timeoutAD :: Int
+timeoutAD = 7 * 60 * 1000 * 1000
+
+timeoutR :: Int
+timeoutR = 12 * 60 * 1000 * 1000
 
 assemble :: Mode -> FilePath -> Int -> FilePath -> IO ()
 assemble mode nbt _n tgt_ = do
   tgt <- readModel $ Path.problems </> tgt_
   let trs0 = getAssembleTrace tgt
-      trs NoOpt  =  trs0
-      trs Opt    =  optimize (Model.emptyR tgt) tgt trs0
-  writeTraceFile nbt $ trs mode
+      optimized = optimize (Model.emptyR tgt) tgt trs0
+      trs NoOpt  =  return trs0
+      trs Opt    =  return optimized
+  writeTraceFile nbt =<< trs mode
 
 disassemble :: Mode -> FilePath -> Int -> FilePath -> IO ()
 disassemble mode nbt _n src_ = do
   src <- readModel $ Path.problems </> src_
   let trs0 = getDisassembleTrace src
-      trs NoOpt  =  trs0
-      trs Opt    =  optimize src (Model.emptyR src) trs0
-  writeTraceFile nbt $ trs mode
+      optimized = optimize src (Model.emptyR src) trs0
+      trs NoOpt  =  return trs0
+      trs Opt    =  return optimized
+  writeTraceFile nbt =<< trs mode
 
 reassemble :: Mode -> FilePath -> Int -> FilePath -> FilePath -> IO ()
 reassemble mode nbt _n src_ tgt_ = do
   src <- readModel $ Path.problems </> src_
   tgt <- readModel $ Path.problems </> tgt_
   let trs0 = getReassembleTrace src tgt
-      trs NoOpt  =  trs0
-      trs Opt    =  optimize src tgt trs0
-  writeTraceFile nbt $ trs mode
+      optimized = optimize src tgt trs0
+      trs NoOpt  =  return trs0
+      trs Opt    =  return optimized
+  writeTraceFile nbt =<< trs mode
 
 run :: (String -> IO ())
     -> FilePath
