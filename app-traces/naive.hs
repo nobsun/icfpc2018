@@ -39,69 +39,74 @@ concurrent n as = do
   mapM_ (writeChan tq) $ map Just as ++ replicate n Nothing  -- enqueue tasks and end-marks
   sequence_ . replicate n $ readChan wq                      -- waiting finish
 
-assemble :: Bool -> FilePath -> Int -> FilePath -> IO ()
-assemble doOpt nbt _n tgt_ = do
+data Mode
+  = NoOpt
+  | Opt
+  deriving (Eq, Show)
+
+descMode :: Mode -> String
+descMode NoOpt = "no-optimize"
+descMode Opt   = "optimize"
+
+assemble :: Mode -> FilePath -> Int -> FilePath -> IO ()
+assemble mode nbt _n tgt_ = do
   tgt <- readModel $ Path.problems </> tgt_
   let trs0 = getAssembleTrace tgt
-      trs
-        | doOpt      =  optimize (Model.emptyR tgt) tgt trs0
-        | otherwise  =  trs0
-  writeTraceFile nbt trs
+      trs NoOpt  =  trs0
+      trs Opt    =  optimize (Model.emptyR tgt) tgt trs0
+  writeTraceFile nbt $ trs mode
 
-disassemble :: Bool -> FilePath -> Int -> FilePath -> IO ()
-disassemble doOpt nbt _n src_ = do
+disassemble :: Mode -> FilePath -> Int -> FilePath -> IO ()
+disassemble mode nbt _n src_ = do
   src <- readModel $ Path.problems </> src_
   let trs0 = getDisassembleTrace src
-      trs
-        | doOpt      =  optimize src (Model.emptyR src) trs0
-        | otherwise  =  trs0
-  writeTraceFile nbt trs
+      trs NoOpt  =  trs0
+      trs Opt    =  optimize src (Model.emptyR src) trs0
+  writeTraceFile nbt $ trs mode
 
-reassemble :: Bool -> FilePath -> Int -> FilePath -> FilePath -> IO ()
-reassemble doOpt nbt _n src_ tgt_ = do
+reassemble :: Mode -> FilePath -> Int -> FilePath -> FilePath -> IO ()
+reassemble mode nbt _n src_ tgt_ = do
   src <- readModel $ Path.problems </> src_
   tgt <- readModel $ Path.problems </> tgt_
   let trs0 = getReassembleTrace src tgt
-      trs
-        | doOpt      =  optimize src tgt trs0
-        | otherwise  =  trs0
-  writeTraceFile nbt trs
+      trs NoOpt  =  trs0
+      trs Opt    =  optimize src tgt trs0
+  writeTraceFile nbt $ trs mode
 
 run :: (String -> IO ())
     -> FilePath
-    -> Bool
+    -> Mode
     -> ProblemFile
     -> IO ()
-run putLog dst doOpt pf = do
+run putLog dst mode pf = do
   let nbtPath = dst </> ProbSet.traceFile pf
       label = nbtPath
   putLog $ "running: " ++ label
   runProblemFile
-    (assemble    doOpt nbtPath)
-    (disassemble doOpt nbtPath)
-    (reassemble  doOpt nbtPath)
+    (assemble    mode nbtPath)
+    (disassemble mode nbtPath)
+    (reassemble  mode nbtPath)
     pf
   putLog $ "done   : " ++ label
 
-runAll :: FilePath -> Bool -> IO ()
-runAll dst doOpt = do
+runAll :: FilePath -> Mode -> IO ()
+runAll dst mode = do
   putStrLn $ "dest-dir: " ++ dst
-  putStrLn $ "mode: " ++ if doOpt then "optimize" else "no-optimize"
+  putStrLn $ "mode: " ++ descMode mode
   do e <- doesDirectoryExist dst
      unless e . fail $ dst ++ " does not exist!"
   putStrLn "processing FA*, FD*, FR* files ..."
   putLog <- newLog
   n <- getNumCapabilities
-  let orderedP
-        | doOpt      =  reverse ProbSet.problemsL  -- opt は高コストなので小さい順
-        | otherwise  =  ProbSet.problemsL
-  concurrent (n - 1) $ map (run putLog dst doOpt) orderedP
+  let orderedP Opt    =  reverse ProbSet.problemsL  -- opt は高コストなので小さい順
+      orderedP NoOpt  =  ProbSet.problemsL
+  concurrent (n - 1) $ map (run putLog dst mode) $ orderedP mode
 
 main :: IO ()
 main = do
   args <- getArgs
   (dst, doOpt) <- case args of
-    d:"opt":_  ->  return (d, True)
-    d:_        ->  return (d, False)
+    d:"opt":_  ->  return (d, Opt)
+    d:_        ->  return (d, NoOpt)
     _   -> fail "DEST_DIRECTORY is required."
   runAll dst doOpt
