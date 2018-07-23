@@ -114,12 +114,12 @@ initialStateForReassembly srcModel tgtModel trace =
   }
 
 initialStateForAssembly :: Model -> Trace -> SystemState
-initialStateForAssembly tgtModel@(Model res _mat) trace =
-  initialStateForReassembly (Model res (MX.makeMatrix [])) tgtModel trace
+initialStateForAssembly tgtModel trace =
+  initialStateForReassembly (emptyR tgtModel) tgtModel trace
 
 initialStateForDisassembly :: Model -> Trace -> SystemState
-initialStateForDisassembly srcModel@(Model res _mat) trace =
-  initialStateForReassembly srcModel (Model res (MX.makeMatrix [])) trace
+initialStateForDisassembly srcModel trace =
+  initialStateForReassembly srcModel (emptyR srcModel) trace
 
 
 type BotId = Int

@@ -55,8 +55,8 @@ main = do
   m1' <- forM (optSrcModel opt) readModel
   m2' <- forM (optTgtModel opt) readModel
   let res = fromJust $ fmap mdResolution m1' `mplus` fmap mdResolution m2'
-  let m1 = fromMaybe (Model res (makeMatrix [])) m1'
-      m2 = fromMaybe (Model res (makeMatrix [])) m2'
+  let m1 = fromMaybe (emptyModel res) m1'
+      m2 = fromMaybe (emptyModel res) m2'
 
   t <- readTraceFile $ optTrace opt
 
