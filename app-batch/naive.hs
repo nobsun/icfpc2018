@@ -1,14 +1,12 @@
-import Control.Applicative ((*>))
-import Control.Monad (forever, when, unless, void)
-import Control.Concurrent (forkIO, getNumCapabilities)
-import Control.Concurrent.Chan (newChan, readChan, writeChan)
+import Control.Monad (when, unless)
+import Control.Concurrent (getNumCapabilities)
 import Control.DeepSeq (deepseq)
 import System.Timeout (timeout)
 import System.Environment (getArgs)
-import System.IO (stdout, BufferMode (LineBuffering), hSetBuffering)
 import System.FilePath ((</>))
 import System.Directory (doesDirectoryExist)
 
+import Concurrent (concurrentIO, newLog)
 import qualified Path
 import ProblemSet (ProblemFile, runProblemFile)
 import qualified ProblemSet as ProbSet
@@ -18,28 +16,6 @@ import qualified Model
 import NaiveBot (getAssembleTrace, getDisassembleTrace, getReassembleTrace)
 import TraceOptimizer (optimize)
 
-
-newLog :: IO (String -> IO ())
-newLog = do
-  hSetBuffering stdout LineBuffering
-  c <- newChan
-  void . forkIO . forever $ putStrLn =<< readChan c
-  return $ writeChan c
-
-concurrent :: Int     -- ^ num of threads
-           -> [IO a]  -- ^ tasks
-           -> IO ()
-concurrent n as = do
-  tq <- newChan
-  wq <- newChan
-  let thread = do
-        mayT <- readChan tq
-        case mayT of
-          Nothing  ->  writeChan wq ()  -- end of thread
-          Just t   ->  t *> thread      -- next task
-  sequence_ . replicate n $ forkIO thread
-  mapM_ (writeChan tq) $ map Just as ++ replicate n Nothing  -- enqueue tasks and end-marks
-  sequence_ . replicate n $ readChan wq                      -- waiting finish
 
 data Mode
   = NoOpt
@@ -130,7 +106,7 @@ runAll dst mode = do
   let orderedP NoOpt  =  ProbSet.problemsL
       orderedP Opt    =  reverse ProbSet.problemsL  -- opt は高コストなので小さい順
       orderedP TOpt   =  reverse ProbSet.problemsL  -- opt は高コストなので小さい順
-  concurrent (n - 1) $ map (run putLog dst mode) $ orderedP mode
+  concurrentIO (n - 1) $ map (run putLog dst mode) $ orderedP mode
 
 main :: IO ()
 main = do
