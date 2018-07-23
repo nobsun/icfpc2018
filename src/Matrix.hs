@@ -5,8 +5,10 @@ module Matrix where
 import Coordinate
 
 import Data.Bool (bool)
+import Data.Foldable
 import Data.IntMap (IntMap)
 import qualified Data.IntMap as IntMap
+import Data.Monoid
 import Data.Set (Set)
 import qualified Data.Set as Set
 
@@ -19,6 +21,12 @@ makeMatrix cs = IntMap.fromListWith Set.union [(y, Set.singleton (x,z)) | Coord 
 
 matrixCoords :: Matrix -> [Coord]
 matrixCoords m = [Coord (x,y,z) | (y, xzs) <- IntMap.toList m, (x,z) <- Set.toList xzs]
+
+matrixSize :: Matrix -> Int
+matrixSize = getSum . foldMap (Sum . Set.size)
+
+matrixUnion :: Matrix -> Matrix -> Matrix
+matrixUnion = IntMap.unionWith Set.union
 
 isGrounded :: Matrix -> Bool
 isGrounded m =
