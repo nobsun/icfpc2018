@@ -40,5 +40,6 @@ parseModel s
 readModel :: FilePath -> IO Model
 readModel fpath = liftM parseModel $ BL.readFile fpath
 
-emptyModel :: Model -> Model
-emptyModel m = m { mdMatrix = makeMatrix [] }
+-- | empty model with same resolution
+emptyR :: Model -> Model
+emptyR m = m { mdMatrix = makeMatrix [] }
