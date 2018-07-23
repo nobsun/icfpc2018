@@ -1,5 +1,7 @@
 -- import Control.Concurrent (getNumCapabilities)
+import Text.Printf (printf)
 import System.FilePath ((</>))
+import System.IO (stdout, BufferMode (LineBuffering), hSetBuffering)
 import System.Timeout (timeout)
 import System.Environment (getArgs)
 
@@ -59,19 +61,21 @@ runCompare trd1 trd2 pf = do
   (suc2, s2) <- run trd2 pf
   let label = ProbSet.traceFile pf
       result suc = if suc then "success" else "failure"
+      v1 = stEnergy s1
+      v2 = stEnergy s2
       energy
         | v1 > v2   =  show v1 ++ " > " ++ show v2
         | v1 < v2   =  show v1 ++ " < " ++ show v2
         | otherwise =  show v1 ++ " = " ++ show v2
         where
-          v1 = stEnergy s1
-          v2 = stEnergy s2
+      rate = fromIntegral v2 / fromIntegral v1 :: Double
   (maybe (putStrLn $ unwords [label, "timeout"]) return =<<) . timeout (2 * 60 * 1000 * 1000) .
-    putStrLn $ unwords [label, "energy", energy, trd1, result suc1, trd2, result suc2]
+    putStrLn $ unwords [label, "energy", printf "right/left %2.2f" rate, energy, trd1, result suc1, trd2, result suc2]
 
 
 runAll :: FilePath -> FilePath -> IO ()
 runAll trd1 trd2 = do
+  hSetBuffering stdout LineBuffering
   mapM_ (runCompare trd1 trd2) $ ProbSet.disassembles
 
 main :: IO ()
