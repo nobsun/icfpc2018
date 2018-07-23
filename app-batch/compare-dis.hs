@@ -1,5 +1,6 @@
 -- import Control.Concurrent (getNumCapabilities)
 import System.FilePath ((</>))
+import System.Timeout (timeout)
 import System.Environment (getArgs)
 
 -- import Concurrent (concurrentIO, newLog)
@@ -52,6 +53,7 @@ run trd pf = do
       success = stTgtMatrix s0 == stMatrix s1
   return (success, s1)
 
+runCompare :: FilePath -> FilePath -> ProblemFile -> IO ()
 runCompare trd1 trd2 pf = do
   (suc1, s1) <- run trd1 pf
   (suc2, s2) <- run trd2 pf
@@ -64,7 +66,8 @@ runCompare trd1 trd2 pf = do
         where
           v1 = stEnergy s1
           v2 = stEnergy s2
-  putStrLn $ unwords [label, "energy", energy, trd1, result suc1, trd2, result suc2]
+  (maybe (putStrLn $ unwords [label, "timeout"]) return =<<) . timeout (2 * 60 * 1000 * 1000) .
+    putStrLn $ unwords [label, "energy", energy, trd1, result suc1, trd2, result suc2]
 
 
 runAll :: FilePath -> FilePath -> IO ()
@@ -76,5 +79,5 @@ main = do
   args <- getArgs
   (trd1, trd2)  <- case args of
     d1:d2:_  -> return (d1, d2)
-    []   -> fail "TRACE_DIRECTORY1 and TRACE_DIRECTORY2 are required."
+    _        -> fail "TRACE_DIRECTORY1 and TRACE_DIRECTORY2 are required."
   runAll trd1 trd2
