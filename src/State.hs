@@ -217,6 +217,7 @@ fillGroundedTable v@(Coord (x,y,z)) gt
       | otherwise = gt1
 
 voidGroundedTable :: [Coord] -> GroundedTable -> GroundedTable
+voidGroundedTable [] gt = gt
 voidGroundedTable vs gt =
   GroundedTable
   { gtRepr = Map.unions $
