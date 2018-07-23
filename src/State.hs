@@ -145,7 +145,7 @@ noCommands = null . stTrace
 data GroundedTable
   = GroundedTable
   { gtRepr :: !(Map Coord Coord) -- 各filledなvoxedから代表元への写像
-  , gtClusters :: !(Map Coord (Matrix, Bool)) -- 代表元からそのクラスタに属するボクセルの集合(+groundedか否か)への写像
+  , gtClusters :: !(Map Coord Matrix) -- 代表元からそのクラスタに属するボクセルの集合への写像
   }
 
 emptyGroundedTable :: GroundedTable
@@ -155,10 +155,13 @@ emptyGroundedTable =
   , gtClusters = Map.empty
   }
 
+isAllGrounded :: GroundedTable -> Bool
+isAllGrounded = all MX.isSomeGrounded . gtClusters
+
 getRepr :: GroundedTable -> Coord -> Coord
 getRepr gt v = gtRepr gt Map.! v
 
-lookupCluster :: Coord -> GroundedTable -> (Matrix, Bool)
+lookupCluster :: Coord -> GroundedTable -> Matrix
 lookupCluster v gt = gtClusters gt Map.! (getRepr gt v)
 
 mergeClusters :: Coord -> Coord -> GroundedTable -> GroundedTable
@@ -167,13 +170,13 @@ mergeClusters v1 v2 gt
   | otherwise  =
       GroundedTable
       { gtRepr = Map.fromList [(c,v1') | c <- matrixCoords m2] `Map.union` gtRepr gt
-      , gtClusters = Map.insert v1' (matrixUnion m1 m2, g1 || g2) $ Map.delete v2' $ gtClusters gt
+      , gtClusters = Map.insert v1' (matrixUnion m1 m2) $ Map.delete v2' $ gtClusters gt
       }
   where
     v1' = getRepr gt v1
     v2' = getRepr gt v2
-    (m1,g1) = gtClusters gt Map.! v1'
-    (m2,g2) = gtClusters gt Map.! v2'
+    m1 = gtClusters gt Map.! v1'
+    m2 = gtClusters gt Map.! v2'
 
 fillGroundedTable :: Coord -> GroundedTable -> GroundedTable
 fillGroundedTable v@(Coord (x,y,z)) gt = foldl' f gt0 neighbors
@@ -181,7 +184,7 @@ fillGroundedTable v@(Coord (x,y,z)) gt = foldl' f gt0 neighbors
     gt0 =
       GroundedTable
       { gtRepr = Map.insert v v (gtRepr gt)
-      , gtClusters = Map.insert v (makeMatrix [v], y==0) (gtClusters gt)
+      , gtClusters = Map.insert v (makeMatrix [v]) (gtClusters gt)
       }   
     neighbors = map Coord [(x-1,y,z),(x+1,y,z),(x,y-1,z),(x,y+1,z),(x,y,z-1),(x,y,z+1)]      
     f gt1 v1

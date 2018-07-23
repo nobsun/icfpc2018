@@ -50,6 +50,12 @@ isGrounded m =
       where
         go (fx, x) = if fx == x then x else go (f fx, fx)
 
+isSomeGrounded :: Matrix -> Bool
+isSomeGrounded m =
+  case IntMap.lookup 0 m of
+    Nothing -> False
+    Just xzs -> not $ Set.null xzs
+
 fill :: Coord -> Matrix -> Matrix
 fill (Coord (x,y,z)) = IntMap.insertWith Set.union y (Set.singleton (x,z))
 
