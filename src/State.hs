@@ -225,8 +225,10 @@ voidGroundedTable vs gt =
       (gtClusters gt Map.\\ Map.fromSet (const ()) rs) : [gtClusters gt1 | gt1 <- gts]
   }
   where
+    vs' = Set.fromList vs
     rs = Set.fromList $ catMaybes [Map.lookup v (gtRepr gt) | v <- vs]
     cs = Set.unions [Set.fromList $ matrixCoords $ gtClusters gt Map.! r | r <- Set.toList rs]
     gts = do
       r <- Set.toList rs
-      return $ foldl' (flip fillGroundedTable) emptyGroundedTable (matrixCoords (gtClusters gt Map.! r))
+      return $ foldl' (flip fillGroundedTable) emptyGroundedTable $
+        Set.fromList (matrixCoords (gtClusters gt Map.! r)) Set.\\ vs'
