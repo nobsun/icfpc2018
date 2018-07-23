@@ -2,6 +2,8 @@ import Control.Applicative ((*>))
 import Control.Monad (forever, unless, void)
 import Control.Concurrent (forkIO, getNumCapabilities)
 import Control.Concurrent.Chan (newChan, readChan, writeChan)
+import Control.DeepSeq (deepseq)
+import System.Timeout (timeout)
 import System.Environment (getArgs)
 import System.IO (stdout, BufferMode (LineBuffering), hSetBuffering)
 import System.FilePath ((</>))
@@ -42,19 +44,19 @@ concurrent n as = do
 data Mode
   = NoOpt
   | Opt
-  --- | TOpt
+  | TOpt
   deriving (Eq, Show)
 
 descMode :: Mode -> String
 descMode NoOpt = "no-optimize"
 descMode Opt   = "optimize"
---- descMode TOpt  = "optimize (may timeoute)"
+descMode TOpt  = "optimize (may timeoute)"
 
-timeoutAD :: Int
-timeoutAD = 7 * 60 * 1000 * 1000
+limitAD :: Int
+limitAD = 4 * 60 * 1000 * 1000
 
-timeoutR :: Int
-timeoutR = 12 * 60 * 1000 * 1000
+limitR :: Int
+limitR = 6 * 60 * 1000 * 1000
 
 assemble :: Mode -> FilePath -> Int -> FilePath -> IO ()
 assemble mode nbt _n tgt_ = do
@@ -63,6 +65,7 @@ assemble mode nbt _n tgt_ = do
       optimized = optimize (Model.emptyR tgt) tgt trs0
       trs NoOpt  =  return trs0
       trs Opt    =  return optimized
+      trs TOpt   =  maybe trs0 id <$> timeout limitAD (optimized `deepseq` return optimized)
   writeTraceFile nbt =<< trs mode
 
 disassemble :: Mode -> FilePath -> Int -> FilePath -> IO ()
@@ -72,6 +75,7 @@ disassemble mode nbt _n src_ = do
       optimized = optimize src (Model.emptyR src) trs0
       trs NoOpt  =  return trs0
       trs Opt    =  return optimized
+      trs TOpt   =  maybe trs0 id <$> timeout limitAD (optimized `deepseq` return optimized)
   writeTraceFile nbt =<< trs mode
 
 reassemble :: Mode -> FilePath -> Int -> FilePath -> FilePath -> IO ()
@@ -82,6 +86,7 @@ reassemble mode nbt _n src_ tgt_ = do
       optimized = optimize src tgt trs0
       trs NoOpt  =  return trs0
       trs Opt    =  return optimized
+      trs TOpt   =  maybe trs0 id <$> timeout limitR  (optimized `deepseq` return optimized)
   writeTraceFile nbt =<< trs mode
 
 run :: (String -> IO ())
@@ -109,15 +114,17 @@ runAll dst mode = do
   putStrLn "processing FA*, FD*, FR* files ..."
   putLog <- newLog
   n <- getNumCapabilities
-  let orderedP Opt    =  reverse ProbSet.problemsL  -- opt は高コストなので小さい順
-      orderedP NoOpt  =  ProbSet.problemsL
+  let orderedP NoOpt  =  ProbSet.problemsL
+      orderedP Opt    =  reverse ProbSet.problemsL  -- opt は高コストなので小さい順
+      orderedP TOpt   =  reverse ProbSet.problemsL  -- opt は高コストなので小さい順
   concurrent (n - 1) $ map (run putLog dst mode) $ orderedP mode
 
 main :: IO ()
 main = do
   args <- getArgs
   (dst, doOpt) <- case args of
-    d:"opt":_  ->  return (d, Opt)
-    d:_        ->  return (d, NoOpt)
+    d:"opt":_   ->  return (d, Opt)
+    d:"topt":_  ->  return (d, TOpt)
+    d:_         ->  return (d, NoOpt)
     _   -> fail "DEST_DIRECTORY is required."
   runAll dst doOpt

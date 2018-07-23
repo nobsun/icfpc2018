@@ -61,6 +61,7 @@ executables:
     - -with-rtsopts=-N13
     dependencies:
     - icfpc2018
+    - deepseq
     - filepath
     - directory
 
