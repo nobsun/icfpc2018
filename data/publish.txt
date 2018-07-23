@@ -1,0 +1,49 @@
+Team Private ID:
+
+7a547388c8064acebe955872d4c18f14
+
+Team Name:
+
+Team Sampou
+
+Team E-mail Address:
+
+icfpc2018@reasoning.tokyo
+
+Team Member(s): (Required for final profile.)
+
+Katsutoshi Ito
+  Kei Hibino
+  Masahiro Sakai
+  Nobuo Yamashita
+  Yasuyuki Ogawa
+  Chikanobu Toyofuku
+
+Team Country(ies): (Required for final profile; comma-separated list of 3-letter country codes.)
+
+JPN
+
+Team Programming Language(s): (Required for final profile; comma-separated list.)
+
+Haskell, sh
+
+Team Homepage: (Optional; homepages will be published after the end of the contest.)
+
+https://github.com/nobsun/icfpc2018/
+
+Source Code URL: (Required for final profile.)
+
+http://reasoning.tokyo/icfpc/icfpc2018-src.zip
+
+Source Code SHA256 Checksum: (Required for final profile.)
+
+ac64f7a012c251c79da58956ac772e75b3b1335122faca735ea3256421b616f9
+
+Comments:
+
+
+Timestamp:
+
+2018-07-23T17:23:02Z
+
+Success
