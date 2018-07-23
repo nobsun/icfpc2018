@@ -1,11 +1,12 @@
 {-# OPTIONS -Wall #-}
 
 module ProblemSet (
-  problems, assembles, disassembles, reassembles,
+  problems, problemsL, assembles, disassembles, reassembles,
   traceFile, filePrefix, number,
   ProblemFile (..), runProblemFile,
   ) where
 
+import Data.List (transpose)
 import System.FilePath ((<.>))
 import Text.Printf (printf)
 
@@ -13,6 +14,12 @@ import Text.Printf (printf)
 
 problems :: [ProblemFile]
 problems = assembles ++ disassembles ++ reassembles
+
+-- | large first problems
+problemsL :: [ProblemFile]
+problemsL =
+  concat . transpose
+  $ map reverse [reassembles, assembles, disassembles]
 
 assembles :: [ProblemFile]
 assembles = map assemble [1 .. 186]
