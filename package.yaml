@@ -78,6 +78,19 @@ executables:
     - filepath
     - directory
 
+  compare-reassembles:
+    main:                compare-re.hs
+    source-dirs:         app-batch
+    ghc-options:
+    - -Wall
+    # - -threaded
+    # - -rtsopts
+    # - -with-rtsopts=-N5
+    dependencies:
+    - icfpc2018
+    - filepath
+    - directory
+
   batch-simulate:
     main:                simulate.hs
     source-dirs:         app-batch
