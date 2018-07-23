@@ -13,7 +13,7 @@ import Data.List
 import qualified Data.Map as Map
 import Data.Set (Set)
 import qualified Data.Set as Set
-import Data.Tuple.Extra (fst3,snd3,thd3)
+-- import Data.Tuple.Extra (fst3,snd3,thd3)
 
 import Coordinate
 import Matrix as MX

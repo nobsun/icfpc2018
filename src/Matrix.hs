@@ -5,7 +5,7 @@ module Matrix where
 import Coordinate
 
 import Data.Bool (bool)
-import Data.Foldable
+-- import Data.Foldable
 import Data.IntMap (IntMap)
 import qualified Data.IntMap as IntMap
 import Data.Monoid
