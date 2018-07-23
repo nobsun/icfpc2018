@@ -8,7 +8,8 @@ import System.FilePath ((</>))
 import System.Directory (doesDirectoryExist)
 
 import qualified Path
-import ProblemSet (ProblemFile, runProblemFile, problems, traceFile)
+import ProblemSet (ProblemFile, runProblemFile)
+import qualified ProblemSet as ProbSet
 import TraceEncoder (writeTraceFile)
 import Model (readModel)
 import qualified Model
@@ -72,7 +73,7 @@ run :: (String -> IO ())
     -> ProblemFile
     -> IO ()
 run putLog dst doOpt pf = do
-  let nbtPath = dst </> traceFile pf
+  let nbtPath = dst </> ProbSet.traceFile pf
       label = nbtPath
   putLog $ "running: " ++ label
   runProblemFile
@@ -91,7 +92,10 @@ runAll dst doOpt = do
   putStrLn "processing FA*, FD*, FR* files ..."
   putLog <- newLog
   n <- getNumCapabilities
-  concurrent (n - 1) $ map (run putLog dst doOpt) problems
+  let orderedP
+        | doOpt      =  reverse ProbSet.problemsL  -- opt は高コストなので小さい順
+        | otherwise  =  ProbSet.problemsL
+  concurrent (n - 1) $ map (run putLog dst doOpt) orderedP
 
 main :: IO ()
 main = do
