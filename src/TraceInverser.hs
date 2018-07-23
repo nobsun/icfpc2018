@@ -9,17 +9,19 @@ import State
 
 
 data T = T
-  { source   :: Trace
-  , nextStep :: Trace
-  , inversed :: Trace
-  , bots     :: Int
+  { source   :: Trace -- 元のトレース
+  , nextStep :: Trace -- 1ステップでの並列ボットのコマンド列
+  , inversed :: Trace -- 変換済みトレース
+  , bots     :: Int   -- 現在のボット数
   }
 
 
+-- naive-bot専用のFA->FD変換
 inverse :: Trace -> Trace
 inverse trs =
   reverse $ inversed $ execState inverseAll initT
   where
+    -- Haltの位置だけ付け替える
     initT = T{source=tail (reverse (Halt:trs)), nextStep=[], inversed=[], bots=1}
 
 ----------------------------------------------------------
@@ -46,8 +48,8 @@ getCommand = do
       put t{source=bs, nextStep=as}
       return a
     ([],_) -> do
-      let (aas,bs) = splitAt b ss
-          (a:as)   = reverse aas
+      let (aas,bs) = splitAt b ss --ボット数だけコマンド列をとる
+          (a:as)   = reverse aas  --逆向きに読んでるので, 再度逆向きに直す
       put t{source=bs, nextStep=as}
       return a
     (a:as,_) -> do
@@ -87,8 +89,8 @@ inverseOne = do
         putInverse (Fission nd (39-b))
         addBot
     (Fission nd m) -> do
-        putInverse (FusionP (1,0,0) )
         -- naive botは Fission (1,0,0) しかしてない!
+        putInverse (FusionP (1,0,0) )
         putInverse (FusionS (-1,0,0) )
         removeBot
     _ ->
