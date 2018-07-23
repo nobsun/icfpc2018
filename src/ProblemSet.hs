@@ -2,10 +2,10 @@
 
 module ProblemSet (
   problems, assembles, disassembles, reassembles,
-  ProblemFile, runProblemFile,
+  ProblemFile, runProblemFile, ProblemFile_ (..),
 
   problems',  assembles', disassembles', reassembles',
-  Problem, runProblem,
+  Problem, runProblem, ProblemType (..),
   ) where
 
 import Text.Printf (printf)
