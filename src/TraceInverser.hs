@@ -18,7 +18,7 @@ data T = T
 
 inverse :: Trace -> Trace
 inverse trs =
-  reverse $ tail $ inversed $ execState inverseAll initT
+  reverse $ inversed $ execState inverseAll initT
   where
     initT = T{source=tail (reverse (Halt:trs)), nextStep=[], inversed=[], bots=1}
 
