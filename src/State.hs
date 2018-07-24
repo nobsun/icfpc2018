@@ -227,7 +227,7 @@ voidGroundedTableSimple v@(Coord (x,y,z)) gt =
     Just r ->
       let m = gtClusters gt Map.! r
           neighbors  = [v1 | v1 <- map Coord [(x-1,y,z),(x+1,y,z),(x,y-1,z),(x,y+1,z),(x,y,z-1),(x,y,z+1)], v1 `Map.member` gtRepr gt]
-          neighbors2 = [v1 | v1 <- map Coord [(x1,y1,z1) | x1 <- [x-1..x+1], y1 <- [y-1..y+1], z1 <- [z-1..z+1]], v /= v1, v1 `Map.member` gtRepr gt]
+          neighbors2 = [v1 | v1 <- map Coord [(x1,y1,z1) | x1 <- [x-1..x+1], y1 <- [y-1..y+1], z1 <- [z-1..z+1]], v1 `Map.member` gtRepr gt]
       in if matrixSize m == 1 then -- この場合 v = r
            Just $ GroundedTable
            { gtRepr = Map.delete v (gtRepr gt)
