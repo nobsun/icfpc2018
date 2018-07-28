@@ -42,39 +42,30 @@ type BState a = State B a
 sMoveDx :: Int -> BState ()
 sMoveDx 0 = return ()
 sMoveDx n = do
-  modify f
-  where
-    f :: B -> B
-    f b@B{ bBot   = bot@Bot{botPos=Coord(x,y,z)}
-         , bTrace = bTrace
-         } =
-      b{ bBot   = bot{botPos=Coord(x+n,y,z)}
+  b@B{ bBot   = bot@Bot{botPos=Coord(x,y,z)}
+     , bTrace = bTrace
+     } <- get
+  put b{ bBot   = bot{botPos=Coord(x+n,y,z)}
        , bTrace = bTrace Seq.|> Seq.fromList[SMove (n,0,0)]
        }
 
 sMoveDy :: Int -> BState ()
 sMoveDy 0 = return ()
 sMoveDy n = do
-  modify f
-  where
-    f :: B -> B
-    f b@B{ bBot   = bot@Bot{botPos=Coord(x,y,z)}
-         , bTrace = bTrace
-         } = 
-      b{ bBot   = bot{botPos=Coord(x,y+n,z)}
+  b@B{ bBot   = bot@Bot{botPos=Coord(x,y,z)}
+     , bTrace = bTrace
+     } <- get
+  put b{ bBot   = bot{botPos=Coord(x,y+n,z)}
        , bTrace = bTrace Seq.|> Seq.fromList[SMove (0,n,0)]
        }
 
 sMoveDz:: Int -> BState ()
 sMoveDz 0 = return ()
 sMoveDz n = do
-  modify f
-  where
-    f :: B -> B
-    f b@B{ bBot   = bot@Bot{botPos=Coord(x,y,z)}
-         , bTrace = bTrace
-         } =
-      b{ bBot   = bot{botPos=Coord(x,y,z+n)}
+  b@B{ bBot   = bot@Bot{botPos=Coord(x,y,z)}
+     , bTrace = bTrace
+     } <- get
+  put b{ bBot   = bot{botPos=Coord(x,y,z+n)}
        , bTrace = bTrace Seq.|> Seq.fromList[SMove (0,0,n)]
        }
 
@@ -95,24 +86,20 @@ sMoveAbs (x,y,z) = do
 
 cFill :: ND -> BState ()
 cFill nd = do
-  modify f
-  where
-    f :: B -> B
-    f b@B{ bTrace = bTrace} =
-      b{ bTrace = bTrace Seq.|> Seq.fromList[Fill nd] }
+  b@B{ bTrace = bTrace} <- get
+  put b{ bTrace = bTrace Seq.|> Seq.fromList[Fill nd] }
 
 cVoid :: ND -> BState ()
 cVoid nd = do
-  modify f
-  where
-    f :: B -> B
-    f b@B{ bTrace = bTrace} =
-      b{ bTrace = bTrace Seq.|> Seq.fromList[Void nd] }
+  b@B{ bTrace = bTrace} <- get
+  put b{ bTrace = bTrace Seq.|> Seq.fromList[Void nd] }
 
 -- (1,0,0)固定でボットを生成する.
 fissionX :: BState B
 fissionX = do
-  modify f
+  b@B{ bBot   = Bot{botId=botId}, bTrace = bTrace} <- get
+  put b{ bTrace = bTrace Seq.|> Seq.fromList[Fission (1,0,0) (39-botId)] }
+  
   B{bBot=Bot{botId=botId,botPos=Coord(x,y,z)}, bTrace=bTrace, bRange=(ra,rb)} <- get
   return $ B{ bBot    = Bot{botId=botId+1, botPos=Coord(x+1,y,z), botSeeds=IntSet.empty} --seedの状態は管理していない
             -- bTraceのn番目の要素はnステップ時のコマンドリストなので, 生成される前の時刻分は空リストで埋めておく
@@ -120,43 +107,27 @@ fissionX = do
             , bTrace  = Seq.iterateN (Seq.length bTrace) id Seq.empty
             , bRange  = (rb, rb+rb-ra)
             }
-  where
-    f :: B -> B
-    f b@B{ bBot   = Bot{botId=botId}
-         , bTrace = bTrace
-         } =
-      b{ bTrace = bTrace Seq.|> Seq.fromList[Fission (1,0,0) (39-botId)] }
 
 fusion :: B -> BState ()
 fusion B{bBot=Bot{botPos=Coord(x',y',z')}, bTrace=bTrace'} = do
   sMoveAbs (x'-1,y',z') -- fusionするためにボットの横(x軸)へ移動する
-  B{bTrace=bTrace} <- get
+  b@B{bTrace=bTrace} <- get
   let len    = max 0 (Seq.length bTrace' - Seq.length bTrace)
       len'   = max 0 (Seq.length bTrace - Seq.length bTrace')
       -- fusionのタイミングでコマンドリストをマージする
       -- トレースが長いほうにあわせるために, 短いほうはWaitをいれておく
       merged = Seq.zipWith (Seq.><) (bTrace Seq.>< Seq.iterateN len id (Seq.singleton Wait)) (bTrace' Seq.>< Seq.iterateN len' id (Seq.singleton Wait))
-  modify (f merged)
-  where
-    f :: Seq.Seq (Seq.Seq Command) -> B -> B
-    f merged b@B{bTrace = bTrace} =
-      b{bTrace = merged Seq.|> Seq.fromList[FusionP (1,0,0), FusionS (-1,0,0)]}
+  put b{bTrace = merged Seq.|> Seq.fromList[FusionP (1,0,0), FusionS (-1,0,0)]}
 
 cFlip :: BState ()
 cFlip = do
-  modify f
-  where
-    f :: B -> B
-    f b@B{ bTrace = bTrace } =
-      b{ bTrace = bTrace Seq.|> Seq.fromList[Flip]}
+  b@B{ bTrace = bTrace } <- get
+  put b{ bTrace = bTrace Seq.|> Seq.fromList[Flip]}
 
 cHalt :: BState ()
 cHalt = do
-  modify f
-  where
-    f :: B -> B
-    f b@B{ bTrace = bTrace} = 
-      b{ bTrace = bTrace Seq.|> Seq.fromList[Halt]}
+  b@B{ bTrace = bTrace} <- get
+  put b{ bTrace = bTrace Seq.|> Seq.fromList[Halt]}
 
 -------------------------------------------------------
 
