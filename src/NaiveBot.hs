@@ -70,6 +70,7 @@ sMoveDz n = do
        }
 
 -- 絶対座標で移動先を指定する.
+-- smoveは最大15歩しか進めないので, 15歩ずつに分割する.
 -- x y z の順で直線移動するので, その実装が影響する可能性はある
 sMoveAbs :: (Int,Int,Int) -> BState ()
 sMoveAbs (x,y,z) = do
@@ -207,12 +208,12 @@ parallelAssemble md@(Model r _) = do
     True -> do
       assemble md
     _    -> do
-      sMoveAbs (rb-1,0,0)
-      b' <- fissionX
+      sMoveAbs (rb-1,0,0)  -- 領域の端まで移動して
+      b' <- fissionX       -- 横の領域に子ボットを生成する
       let b'' = execState (parallelAssemble md) b'
-      assemble md
-      fusion b''
-      sMoveAbs (ra,r-1,0)
+      assemble md          -- 自分の担当領域を処理
+      fusion b''           -- 子ボットを回収する
+      sMoveAbs (ra,r-1,0)  -- 領域の端っこで親に回収されるのを待つ
 
 parallelDisassemble :: Model -> BState ()
 parallelDisassemble md@(Model r _) = do
@@ -221,12 +222,12 @@ parallelDisassemble md@(Model r _) = do
     True -> do
       disassemble md
     _    -> do
-      sMoveAbs (rb-1,r-1,0) 
-      b' <- fissionX
+      sMoveAbs (rb-1,r-1,0)  -- 領域の端まで移動して
+      b' <- fissionX         -- 横の領域に子ボットを生成する
       let b'' = execState (parallelDisassemble md) b'
-      disassemble md
-      fusion b''
-      sMoveAbs (ra,0,0)
+      disassemble md         -- 自分の担当領域を処理
+      fusion b''             -- 子ボットを回収する
+      sMoveAbs (ra,0,0)      -- 領域の端っこで親に回収されるのを待つ
 
 parallelReassemble :: Model -> Model -> BState ()
 parallelReassemble src@(Model r _) tgt = do
@@ -236,11 +237,11 @@ parallelReassemble src@(Model r _) tgt = do
       reassemble src tgt
     _    -> do
       sMoveAbs (rb-1,0,0) -- 領域の端まで移動して
-      b' <- fissionX      -- 横の領域にボットを生成する
+      b' <- fissionX      -- 横の領域に子ボットを生成する
       let b'' = execState (parallelReassemble src tgt) b'
-      reassemble src tgt
-      fusion b''          -- fusionするときにトレースもマージする
-      sMoveAbs (ra,r-1,0) -- 領域の端っこでfusionされるのを待つ
+      reassemble src tgt  -- 自分の担当領域を処理
+      fusion b''          -- 子ボットを回収する
+      sMoveAbs (ra,r-1,0) -- 領域の端っこで親に回収されるのを待つ
 
 assemble :: Model -> BState ()
 assemble (Model r mat) = do
@@ -251,7 +252,7 @@ assemble (Model r mat) = do
     , let mset = IntMap.lookup y mat
     , (x,z) <- maybe [] (filter (\(x,z)->ra<=x&&x<rb) . Set.toList) mset
     ]
-  sMoveAbs (ra,r-1,0) -- 領域の端っこでfusionされるのを待つ
+  sMoveAbs (ra,r-1,0) -- 領域の端っこで親に回収されるのを待つ
 
 disassemble :: Model -> BState ()
 disassemble (Model r mat) = do
@@ -262,7 +263,7 @@ disassemble (Model r mat) = do
     , let mset = IntMap.lookup y mat
     , (x,z) <- maybe [] (filter (\(x,z)->ra<=x&&x<rb) . Set.toList) mset
     ]
-  sMoveAbs (ra,0,0) -- 領域の端っこでfusionされるのを待つ
+  sMoveAbs (ra,0,0) -- 領域の端っこで親に回収されるのを待つ
 
 reassemble :: Model -> Model -> BState ()
 reassemble (Model r srcmat) (Model _ tgtmat) = do
@@ -277,7 +278,7 @@ reassemble (Model r srcmat) (Model _ tgtmat) = do
     [ [ sMoveAbs (x,y, if dir then 0 else r-1)] ++ -- z軸の端に移動する正規化(無駄な動きをするが分かりやすいので)
       [ reconst ty dir (x,y,z)
       -- sortの順番を (z, dir) の順で判定させる (dir=direction)
-      -- tgt のほう srcのあとに持ってきたいので z座標をずらしている
+      -- tgt のほうを srcのあとに持ってきたいので z座標をずらしている
       | ((_x,z),ty) <- orderBy dir $ zip srcs (repeat (not dir, 'S')) ++ zip (map (adjustz dir) tgts) (repeat (dir, 'T'))
       ]
       ++ [sMoveAbs (x,y, if dir then r-1 else 0)] -- z軸のもう一方の端に移動する正規化(同上)
@@ -285,7 +286,7 @@ reassemble (Model r srcmat) (Model _ tgtmat) = do
     , let srcs = maybe [] (filter ((==x).fst) . Set.toList) (IntMap.lookup y srcmat)
     , let tgts = maybe [] (filter ((==x).fst) . Set.toList) (IntMap.lookup y tgtmat)
     ]
-  sMoveAbs (ra,r-1,0) -- 領域の端っこでfusionされるのを待つ
+  sMoveAbs (ra,r-1,0) -- 領域の端っこで親に回収されるのを待つ
   where
     orderBy True  = sort
     orderBy False = sortBy (flip compare)
