@@ -34,25 +34,20 @@ isEnd = do
 getCommand :: State T Command
 getCommand = do
   t@T{source=ss, nextStep=ns, inversed=is, bots=b} <- get
-  case (ns,ss) of
-    -- Fusionがきたら先回りしてbを増やしておく
-    ([],FusionS _:_) -> do
-      let (aas,bs) = splitAt (b+1) ss
-          (a:as)   = reverse aas
+  let b' = case ss of
+              -- Fusionがきたら先回りしてbを増やしておく
+              (FusionS _):_    -> b+1
+              -- Fissionがきたら先回りしてbを減らしておく
+              (Fission _ _):_  -> b-1
+              -- その他はそのまま
+              _                -> b
+  case ns of
+    [] -> do
+      let (aas,bs) = splitAt b' ss -- ボット数だけコマンド列をとる
+          (a:as)   = reverse aas   -- 逆向きに読んでるので, 再度逆向きに直す
       put t{source=bs, nextStep=as}
       return a
-    -- Fissionがきたら先回りしてbを減らしておく
-    ([],Fission _ _:_) -> do
-      let (aas,bs) = splitAt (b-1) ss
-          (a:as)   = reverse aas
-      put t{source=bs, nextStep=as}
-      return a
-    ([],_) -> do
-      let (aas,bs) = splitAt b ss --ボット数だけコマンド列をとる
-          (a:as)   = reverse aas  --逆向きに読んでるので, 再度逆向きに直す
-      put t{source=bs, nextStep=as}
-      return a
-    (a:as,_) -> do
+    a:as -> do
       put t{nextStep=as}
       return a
 
