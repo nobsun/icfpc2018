@@ -1,6 +1,8 @@
 import System.Environment
 
+import Data.Foldable (toList, msum)
 import Data.List (sort)
+import qualified Data.Sequence as Seq (singleton)
 
 import TraceEncoder (writeTraceFile)
 import NaiveBot (getAssembleTrace', getDisassembleTrace', getReassembleTrace')
@@ -18,15 +20,15 @@ solve1 :: String -> IO ()
 solve1 mdl = do
   model <- readModel mdl
   let trs = method model
---  putStrLn ("resolution: " ++ show (mdResolution model))
+  putStrLn ("resolution: " ++ show (mdResolution model))
 --  mapM_ print trs
-  writeTraceFile (mkNbtName mdl) (concat trs)
+  writeTraceFile (mkNbtName mdl) (toList (msum trs))
   where
     method = 
       case take 2 mdl of
         "FA" -> getAssembleTrace'
         "FD" -> getDisassembleTrace'
-        _    -> const [[Halt]]
+        _    -> const (Seq.singleton (Seq.singleton Halt))
 
 solve2 :: [String] -> IO ()
 solve2 [src,tgt] = do
@@ -34,9 +36,9 @@ solve2 [src,tgt] = do
   tgtModel <- readModel tgt
   let trs = getReassembleTrace' srcModel tgtModel
   putStrLn ("src=" ++ src ++ " tgt=" ++ tgt)
---  putStrLn ("resolution: " ++ show (mdResolution srcModel))
+  putStrLn ("resolution: " ++ show (mdResolution srcModel))
 --  mapM_ print trs
-  writeTraceFile (mkNbtName src) (concat trs)
+  writeTraceFile (mkNbtName src) (toList (msum trs))
 
 mkNbtName :: String -> String
 mkNbtName str =

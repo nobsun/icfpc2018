@@ -11,10 +11,12 @@ module NaiveBot
 
 import Control.Monad (replicateM)
 import Control.Monad.State.Lazy
+import qualified Data.Foldable as Fold
 import Data.List (sort, sortBy)
 import qualified Data.IntMap as IntMap
 import qualified Data.IntSet as IntSet
 import qualified Data.Set as Set
+import qualified Data.Sequence as Seq
 
 import Coordinate
 import Model
@@ -29,7 +31,7 @@ import State
 
 data B = B
   { bBot    :: Bot       -- the bot
-  , bTrace  :: [Trace]   -- ボットのコマンドリスト. n番目の要素はnステップ時のfusion済みボットのコマンドリストが入る
+  , bTrace  :: Seq.Seq (Seq.Seq Command)   -- ボットのコマンドリスト. n番目の要素はnステップ時のfusion済みボットのコマンドリストが入る
   , bRange  :: (Int,Int) -- ボットが担当するx軸の範囲 [a,b)
   }
 
@@ -47,7 +49,7 @@ sMoveDx n = do
          , bTrace = bTrace
          } =
       b{ bBot   = bot{botPos=Coord(x+n,y,z)}
-       , bTrace = [SMove (n,0,0)]:bTrace
+       , bTrace = bTrace Seq.|> Seq.fromList[SMove (n,0,0)]
        }
 
 sMoveDy :: Int -> BState ()
@@ -60,7 +62,7 @@ sMoveDy n = do
          , bTrace = bTrace
          } = 
       b{ bBot   = bot{botPos=Coord(x,y+n,z)}
-       , bTrace = [SMove (0,n,0)]:bTrace
+       , bTrace = bTrace Seq.|> Seq.fromList[SMove (0,n,0)]
        }
 
 sMoveDz:: Int -> BState ()
@@ -73,7 +75,7 @@ sMoveDz n = do
          , bTrace = bTrace
          } =
       b{ bBot   = bot{botPos=Coord(x,y,z+n)}
-       , bTrace = [SMove (0,0,n)]:bTrace
+       , bTrace = bTrace Seq.|> Seq.fromList[SMove (0,0,n)]
        }
 
 -- 絶対座標で移動先を指定する.
@@ -97,7 +99,7 @@ cFill nd = do
   where
     f :: B -> B
     f b@B{ bTrace = bTrace} =
-      b{ bTrace = [Fill nd]:bTrace }
+      b{ bTrace = bTrace Seq.|> Seq.fromList[Fill nd] }
 
 cVoid :: ND -> BState ()
 cVoid nd = do
@@ -105,7 +107,7 @@ cVoid nd = do
   where
     f :: B -> B
     f b@B{ bTrace = bTrace} =
-      b{ bTrace = [Void nd]:bTrace}
+      b{ bTrace = bTrace Seq.|> Seq.fromList[Void nd] }
 
 -- (1,0,0)固定でボットを生成する.
 fissionX :: BState B
@@ -115,7 +117,7 @@ fissionX = do
   return $ B{ bBot    = Bot{botId=botId+1, botPos=Coord(x+1,y,z), botSeeds=IntSet.empty} --seedの状態は管理していない
             -- bTraceのn番目の要素はnステップ時のコマンドリストなので, 生成される前の時刻分は空リストで埋めておく
             -- (fusion時にマージできるように)
-            , bTrace  = take (length bTrace) (repeat [])
+            , bTrace  = Seq.iterateN (Seq.length bTrace) id Seq.empty
             , bRange  = (rb, rb+rb-ra)
             }
   where
@@ -123,21 +125,22 @@ fissionX = do
     f b@B{ bBot   = Bot{botId=botId}
          , bTrace = bTrace
          } =
-      b{ bTrace = [Fission (1,0,0) (39-botId)]:bTrace}
+      b{ bTrace = bTrace Seq.|> Seq.fromList[Fission (1,0,0) (39-botId)] }
 
 fusion :: B -> BState ()
 fusion B{bBot=Bot{botPos=Coord(x',y',z')}, bTrace=bTrace'} = do
   sMoveAbs (x'-1,y',z') -- fusionするためにボットの横(x軸)へ移動する
   B{bTrace=bTrace} <- get
-  let len = max (length bTrace) (length bTrace')
+  let len    = max 0 (Seq.length bTrace' - Seq.length bTrace)
+      len'   = max 0 (Seq.length bTrace - Seq.length bTrace')
       -- fusionのタイミングでコマンドリストをマージする
       -- トレースが長いほうにあわせるために, 短いほうはWaitをいれておく
-      merged = reverse (take len (zipWith (++) (reverse bTrace ++ repeat[Wait]) (reverse bTrace' ++ repeat[Wait])))
+      merged = Seq.zipWith (Seq.><) (bTrace Seq.>< Seq.iterateN len id (Seq.singleton Wait)) (bTrace' Seq.>< Seq.iterateN len' id (Seq.singleton Wait))
   modify (f merged)
   where
-    f :: [Trace] -> B -> B
+    f :: Seq.Seq (Seq.Seq Command) -> B -> B
     f merged b@B{bTrace = bTrace} =
-      b{bTrace = [FusionP (1,0,0), FusionS (-1,0,0)]:merged}
+      b{bTrace = merged Seq.|> Seq.fromList[FusionP (1,0,0), FusionS (-1,0,0)]}
 
 cFlip :: BState ()
 cFlip = do
@@ -145,7 +148,7 @@ cFlip = do
   where
     f :: B -> B
     f b@B{ bTrace = bTrace } =
-      b{ bTrace = [Flip]:bTrace}
+      b{ bTrace = bTrace Seq.|> Seq.fromList[Flip]}
 
 cHalt :: BState ()
 cHalt = do
@@ -153,15 +156,15 @@ cHalt = do
   where
     f :: B -> B
     f b@B{ bTrace = bTrace} = 
-      b{ bTrace = [Halt]:bTrace}
+      b{ bTrace = bTrace Seq.|> Seq.fromList[Halt]}
 
 -------------------------------------------------------
 
-getTrace :: (Model -> BState ()) -> Model -> [Trace]
+getTrace :: (Model -> BState ()) -> Model -> Seq.Seq (Seq.Seq Command)
 getTrace bot md@(Model r _mat) =
-  reverse $ bTrace $ execState (bot md)
+  bTrace $ execState (bot md)
   $ B{ bBot   = Bot{botPos=Coord(0,0,0), botId=1, botSeeds=IntSet.empty}
-     , bTrace = []
+     , bTrace = Seq.empty
      , bRange = (0, q+(if rest > 0 then 1 else 0))
      }
   where
@@ -169,29 +172,29 @@ getTrace bot md@(Model r _mat) =
 
 getAssembleTrace :: Model -> Trace
 getAssembleTrace =
-  concat . getAssembleTrace'
+  Fold.toList . Fold.msum . getAssembleTrace'
 
-getAssembleTrace' :: Model -> [Trace]
+getAssembleTrace' :: Model -> Seq.Seq (Seq.Seq Command)
 getAssembleTrace' =
   getTrace assembleRoot
 
 getDisassembleTrace :: Model -> Trace
 getDisassembleTrace =
-  concat . getDisassembleTrace'
+  Fold.toList . Fold.msum . getDisassembleTrace'
 
-getDisassembleTrace' :: Model -> [Trace]
+getDisassembleTrace' :: Model -> Seq.Seq (Seq.Seq Command)
 getDisassembleTrace' =
   getTrace disassembleRoot
 
 getReassembleTrace :: Model -> Model -> Trace
 getReassembleTrace src tgt =
-  concat (getReassembleTrace' src tgt)
+  Fold.toList (Fold.msum (getReassembleTrace' src tgt))
 
-getReassembleTrace' :: Model -> Model -> [Trace]
+getReassembleTrace' :: Model -> Model -> Seq.Seq (Seq.Seq Command)
 getReassembleTrace' src@(Model r _) tgt =
-  reverse $ bTrace $ execState (reassembleRoot src tgt)
+  bTrace $ execState (reassembleRoot src tgt)
   $ B{ bBot   = Bot{botPos=Coord(0,0,0), botId=1, botSeeds=IntSet.empty}
-     , bTrace = []
+     , bTrace = Seq.empty
      , bRange = (0, q+(if rest > 0 then 1 else 0))
      }
   where
