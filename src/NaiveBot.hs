@@ -298,11 +298,9 @@ reassemble (Model r srcmat) (Model _ tgtmat) = do
   B{bRange=(ra,rb)} <- get
   -- とにかくz軸方向を前後しながら動くように順番を調整する
   let ls = zip (concat (repeat [True,False]))
-        [ (x, y, srcs, tgts)
+        [ (x, y)
         | y <- [0..r-2]
         , x <- [ra..min (rb-1) (r-2)]
-        , let srcs = maybe [] (filter ((==x).fst) . Set.toList) (IntMap.lookup y srcmat)
-        , let tgts = maybe [] (filter ((==x).fst) . Set.toList) (IntMap.lookup y tgtmat)
         ]
   sequence_ $ concat
     [ [ sMoveAbs (x,y, if dir then 0 else r-1)] ++ -- z軸の端に移動する正規化(無駄な動きをするが分かりやすいので)
@@ -312,7 +310,9 @@ reassemble (Model r srcmat) (Model _ tgtmat) = do
       | ((_x,z),ty) <- orderBy dir $ zip srcs (repeat (not dir, 'S')) ++ zip (map (adjustz dir) tgts) (repeat (dir, 'T'))
       ]
       ++ [sMoveAbs (x,y, if dir then r-1 else 0)] -- z軸のもう一方の端に移動する正規化(同上)
-    | (dir, (x, y, srcs, tgts)) <- ls
+    | (dir, (x, y)) <- ls
+    , let srcs = maybe [] (filter ((==x).fst) . Set.toList) (IntMap.lookup y srcmat)
+    , let tgts = maybe [] (filter ((==x).fst) . Set.toList) (IntMap.lookup y tgtmat)
     ]
   sMoveAbs (ra,r-1,0) -- 領域の端っこでfusionされるのを待つ
   where
