@@ -47,7 +47,7 @@ data SystemState
 
 
 stateIsWellformed :: SystemState -> Bool
-stateIsWellformed s | isGrounded (stMatrix s) /= stateIsGrounded s = undefined
+-- stateIsWellformed s | isGrounded (stMatrix s) /= stateIsGrounded s = undefined
 stateIsWellformed s = and
   [ -- If the harmonics is Low, then all Full voxels of the matrix are grounded.
     stHarmonics s == High || stateIsGrounded s
