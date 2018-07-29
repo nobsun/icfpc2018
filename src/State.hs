@@ -185,24 +185,23 @@ getRepr gt v = gtRepr gt Map.! v
 lookupCluster :: Coord -> GroundedTable -> Matrix
 lookupCluster v gt = gtClusters gt Map.! (getRepr gt v)
 
+-- pre-condition: v1 and v2 must be representative elements
 mergeClusters :: Coord -> Coord -> GroundedTable -> GroundedTable
 mergeClusters v1 v2 gt
-  | v1' == v2' = gt
+  | v1 == v2 = gt
   | matrixSize m1 >= matrixSize m2 =
       GroundedTable
-      { gtRepr = Map.fromList [(c,v1') | c <- matrixCoords m2] `Map.union` gtRepr gt
-      , gtClusters = Map.insert v1' (matrixUnion m1 m2) $ Map.delete v2' $ gtClusters gt
+      { gtRepr = Map.fromList [(c,v1) | c <- matrixCoords m2] `Map.union` gtRepr gt
+      , gtClusters = Map.insert v1 (matrixUnion m1 m2) $ Map.delete v2 $ gtClusters gt
       }
   | otherwise =
       GroundedTable
-      { gtRepr = Map.fromList [(c,v2') | c <- matrixCoords m1] `Map.union` gtRepr gt
-      , gtClusters = Map.insert v2' (matrixUnion m1 m2) $ Map.delete v1' $ gtClusters gt
+      { gtRepr = Map.fromList [(c,v2) | c <- matrixCoords m1] `Map.union` gtRepr gt
+      , gtClusters = Map.insert v2 (matrixUnion m1 m2) $ Map.delete v1 $ gtClusters gt
       }
   where
-    v1' = getRepr gt v1
-    v2' = getRepr gt v2
-    m1 = gtClusters gt Map.! v1'
-    m2 = gtClusters gt Map.! v2'
+    m1 = gtClusters gt Map.! v1
+    m2 = gtClusters gt Map.! v2
 
 fillGroundedTable :: Coord -> GroundedTable -> GroundedTable
 fillGroundedTable v@(Coord (x,y,z)) gt
@@ -215,9 +214,10 @@ fillGroundedTable v@(Coord (x,y,z)) gt
       , gtClusters = Map.insert v (makeMatrix [v]) (gtClusters gt)
       }
     neighbors = map Coord [(x-1,y,z),(x+1,y,z),(x,y-1,z),(x,y+1,z),(x,y,z-1),(x,y,z+1)]
-    f gt1 v1
-      | v1 `Map.member` gtRepr gt1 = mergeClusters v v1 gt1
-      | otherwise = gt1
+    f gt1 v1 =
+      case Map.lookup v1 (gtRepr gt1) of
+        Just v1' -> mergeClusters (getRepr gt1 v) v1' gt1
+        Nothing -> gt1
 
 
 voidGroundedTableSimple :: Coord -> GroundedTable -> Maybe GroundedTable
