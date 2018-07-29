@@ -25,8 +25,11 @@ data Coord = CoordU {-# UNPACK #-} !Int {-# UNPACK #-} !Int {-# UNPACK #-} !Int 
 unCoord :: Coord -> (Int,Int,Int)
 unCoord (CoordU x y z) = (x,y,z)
 
+pattern Coord :: (Int,Int,Int) -> Coord
 pattern Coord xyz <- (unCoord -> xyz) where
   Coord (x,y,z) = CoordU x y z
+
+{-# COMPLETE Coord #-}
 
 coord :: Alternative f
       => Int -> (Int, Int, Int) -> f Coord
