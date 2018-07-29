@@ -1,6 +1,8 @@
 {-# OPTIONS_GHC -Wall #-}
 {-# LANGUAGE TypeSynonymInstances #-}
 {-# LANGUAGE FlexibleInstances #-}
+{-# LANGUAGE PatternSynonyms #-}
+{-# LANGUAGE ViewPatterns #-}
 
 module Coordinate where
 
@@ -18,10 +20,13 @@ type R = Int
 isValidR :: R -> Bool
 isValidR = (&&) . (0 <) <*> (<= 250)
 
-newtype Coord = Coord (Int, Int, Int) deriving (Eq, Ord, Show)
+data Coord = CoordU {-# UNPACK #-} !Int {-# UNPACK #-} !Int {-# UNPACK #-} !Int deriving (Eq, Ord, Show)
 
 unCoord :: Coord -> (Int,Int,Int)
-unCoord (Coord c) = c
+unCoord (CoordU x y z) = (x,y,z)
+
+pattern Coord xyz <- (unCoord -> xyz) where
+  Coord (x,y,z) = CoordU x y z
 
 coord :: Alternative f
       => Int -> (Int, Int, Int) -> f Coord
